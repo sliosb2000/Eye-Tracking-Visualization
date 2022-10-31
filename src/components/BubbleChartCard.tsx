@@ -1,4 +1,5 @@
-import { Slider, FormControl, InputLabel, Select, SelectChangeEvent, MenuItem } from "@mui/material";
+import { PlayArrowRounded } from "@mui/icons-material";
+import { Slider, FormControl, InputLabel, Select, SelectChangeEvent, MenuItem, ToggleButton } from "@mui/material";
 import {
   Chart as ChartJS,
   LinearScale,
@@ -12,6 +13,12 @@ import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts
 import React from "react";
 import { Bubble } from "react-chartjs-2";
 import { VisualizationType , FXD, DataFiles, DataType, participants } from "../Data";
+
+const MIN_SLIDER_VALUE = 0;
+const DEFAULT_DATA = {
+  participantId: "p1",
+  visualizationType: VisualizationType.GRAPH,
+}
 
 interface Props {
   height?: string,
@@ -27,10 +34,17 @@ interface State {
   selectedParticipantId: string;
   selectedVizualizationType: VisualizationType;
   durationMultiplier: number;
+  buttonSelectedState: boolean;
 }
 
+//TODO: slider/input field opacity for bubble
+//TODO: slider scale for bubble radius
+
 class BubbleChartCard extends React.Component<Props, State> {
+
   private humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
+  private playInterval?: NodeJS.Timeout;
+
   constructor(props: Props) {
     super(props);
 
@@ -52,16 +66,27 @@ class BubbleChartCard extends React.Component<Props, State> {
       spacer: "",
       units: ["m", "s", "ms"],
     });
-
-    const data = this.getBubbleChartData("p1", VisualizationType.GRAPH);
+    
+    const data = this.getBubbleChartData(DEFAULT_DATA.participantId, DEFAULT_DATA.visualizationType);
     this.state = {
       data: data.data,
-      sliderValueMin: 0,
+      sliderValueMin: MIN_SLIDER_VALUE,
       sliderValueMax: data.max,
-      sliderValueRange: [0, data.max],
-      selectedParticipantId: "p1",
-      selectedVizualizationType: VisualizationType.GRAPH,
+      sliderValueRange: [MIN_SLIDER_VALUE, data.max],
+      selectedParticipantId: DEFAULT_DATA.participantId,
+      selectedVizualizationType: DEFAULT_DATA.visualizationType,
       durationMultiplier: data.durationMultiplier,
+      buttonSelectedState: false,
+    }
+  }
+
+  componentDidMount() {
+
+  }
+
+  componentWillUnmount() {
+    if (this.playInterval) {
+      clearInterval(this.playInterval);
     }
   }
 
@@ -84,12 +109,11 @@ class BubbleChartCard extends React.Component<Props, State> {
       }
       return dataPoint;
     });
-
     const data: ChartData<"bubble"> = {
       datasets: [{
         label: participantId,
         data: chartData,
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        backgroundColor: 'rgba(255, 99, 132, 0.3)',
       }],
     };
 
@@ -139,24 +163,79 @@ class BubbleChartCard extends React.Component<Props, State> {
           <Bubble options={options} data={this.state.data} />
           
           <div className="menu">
-            <Slider
-              getAriaLabel={() => 'Time Range'}
-              value={this.state.sliderValueRange}
-              min={this.state.sliderValueMin}
-              max={this.state.sliderValueMax}
-              onChange={(event: Event, newValue: number | number[]) =>{
-                const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, (newValue as number[])[0],  (newValue as number[])[1]);
-                this.setState({
-                  data: data.data,
-                  sliderValueRange: newValue as number[],
-                  durationMultiplier: data.durationMultiplier,
-                });
-              }}
-              valueLabelFormat={(value) => {
-                return `${this.humanizer.humanize(value).replaceAll(",", "")}`;
-              }}
-              valueLabelDisplay="auto"
-            />
+            <div className="slider" style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+            }}>
+              <div style={{
+                width: "10px",
+              }} />
+              <Slider
+                style={{
+                  width: "95%"
+                }}
+                getAriaLabel={() => 'Time Range'}
+                value={this.state.sliderValueRange}
+                min={this.state.sliderValueMin}
+                max={this.state.sliderValueMax}
+                step={1000}
+                onChange={(event: Event, newValue: number | number[]) =>{
+                  const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, (newValue as number[])[0],  (newValue as number[])[1]);
+                  this.setState({
+                    data: data.data,
+                    sliderValueRange: newValue as number[],
+                    durationMultiplier: data.durationMultiplier,
+                  });
+                }}
+                valueLabelFormat={(value) => {
+                  return `${this.humanizer.humanize(value).replaceAll(",", "")}`;
+                }}
+                valueLabelDisplay="auto"
+              />
+              <div style={{
+                width: "20px",
+              }} />
+              <ToggleButton
+                value="check"
+                selected={this.state.buttonSelectedState}
+                onChange={() =>{
+                  if (!this.state.buttonSelectedState) {
+                    this.playInterval = setInterval(() => {
+                      if (this.state.sliderValueRange[1] >= this.state.sliderValueMax) {
+                        if (this.playInterval) {
+                          clearInterval(this.playInterval);
+                          this.setState({
+                            buttonSelectedState: false,
+                          });
+                          return;
+                        }
+                      }
+                      const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, this.state.sliderValueRange[0], this.state.sliderValueRange[1]);
+                      this.setState({
+                        data: data.data,
+                        sliderValueRange: [this.state.sliderValueRange[0], this.state.sliderValueRange[1] + 1000],
+                        durationMultiplier: data.durationMultiplier,
+                      });
+                    }, 1000);
+                  } else {
+                    if (this.playInterval) {
+                      clearInterval(this.playInterval);
+                      this.setState({
+                        buttonSelectedState: false,
+                      });
+                    }
+                  }
+
+                  this.setState({
+                    buttonSelectedState: !this.state.buttonSelectedState,
+                  });
+                }}
+              >
+                <PlayArrowRounded />
+              </ToggleButton>
+            </div>
 
             <div className="selection">
               <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
@@ -177,6 +256,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                       sliderValueMax: data.max,
                       sliderValueRange: [0, data.max],
                       durationMultiplier: data.durationMultiplier,
+                      buttonSelectedState: false,
                     });
                   }}
                 >
@@ -208,6 +288,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                       sliderValueMax: data.max,
                       sliderValueRange: [0, data.max],
                       durationMultiplier: data.durationMultiplier,
+                      buttonSelectedState: false,
                     });
                   }}
                 >
