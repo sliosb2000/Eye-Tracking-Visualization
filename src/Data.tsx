@@ -1,6 +1,6 @@
 // File Naming Conventions
 export const participants = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p10", "p11", "p12", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p23", "p24", "p25", "p27", "p28", "p30", "p31", "p32", "p33", "p34", "p35", "p36"];
-export enum VizualizationType {
+export enum VisualizationType {
   GRAPH = "graph",
   TREE = "tree",
 }
@@ -21,7 +21,7 @@ const dataPath = "./data/Archive";
  * 
  * Usage: DataFiles.get("p3")!.get(VizualizationType.GRAPH)!.get(DataType.FXD)! as FXD[]
  */
-export const DataFiles = new Map<string, Map<VizualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>>();
+export const DataFiles = new Map<string, Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>>();
 
 export interface EVD {
 
@@ -39,8 +39,8 @@ export interface GZD {
 
 export async function loadData() {  
   for (const i of participants) {
-    const vizualizationTypeMap = new Map<VizualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>();
-    for (const j of Object.values(VizualizationType)) {
+    const vizualizationTypeMap = new Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>();
+    for (const j of Object.values(VisualizationType)) {
       const dataTypeMap = new Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>();
       for (const k of Object.values(DataType)) {
         const path = `${dataPath}/${i}/${i}.${j}${k}${fileType}`;
