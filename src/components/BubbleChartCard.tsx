@@ -11,7 +11,7 @@ import {
 import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts";
 import React from "react";
 import { Bubble } from "react-chartjs-2";
-import { VizualizationType, FXD, DataFiles, DataType, participants } from "../Data";
+import { VisualizationType , FXD, DataFiles, DataType, participants } from "../Data";
 
 interface Props {
   height?: string,
@@ -25,7 +25,7 @@ interface State {
   sliderValueRange: number[];
   data: ChartData<"bubble">;
   selectedParticipantId: string;
-  selectedVizualizationType: VizualizationType | string;
+  selectedVizualizationType: VisualizationType;
   durationMultiplier: number;
 }
 
@@ -53,21 +53,21 @@ class BubbleChartCard extends React.Component<Props, State> {
       units: ["m", "s", "ms"],
     });
 
-    const data = this.getBubbleChartData("p1", VizualizationType.GRAPH);
+    const data = this.getBubbleChartData("p1", VisualizationType.GRAPH);
     this.state = {
       data: data.data,
       sliderValueMin: 0,
       sliderValueMax: data.max,
       sliderValueRange: [0, data.max],
       selectedParticipantId: "p1",
-      selectedVizualizationType: VizualizationType.GRAPH,
+      selectedVizualizationType: VisualizationType.GRAPH,
       durationMultiplier: data.durationMultiplier,
     }
   }
 
-  private getBubbleChartData(participantId: string, vizualizationType: string, min?: number, max?: number) {
-    let participantData: FXD[] = DataFiles.get(participantId)!.get(vizualizationType as VizualizationType)!.get(DataType.FXD)! as FXD[];
-    if (min && max) {
+  private getBubbleChartData(participantId: string, vizualizationType: VisualizationType, min?: number, max?: number) {
+    let participantData: FXD[] = DataFiles.get(participantId)!.get(vizualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
+    if (min !== undefined && max !== undefined) {
       participantData = participantData.filter(data => {
         return data.time > min && data.time < max;
       });
@@ -169,10 +169,13 @@ class BubbleChartCard extends React.Component<Props, State> {
                     const {
                       target: { value },
                     } = event;
-                    const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType);
+                    const data = this.getBubbleChartData(value, this.state.selectedVizualizationType);
                     this.setState({
                       data: data.data,
                       selectedParticipantId: value,
+                      sliderValueMin: 0,
+                      sliderValueMax: data.max,
+                      sliderValueRange: [0, data.max],
                       durationMultiplier: data.durationMultiplier,
                     });
                   }}
@@ -197,15 +200,18 @@ class BubbleChartCard extends React.Component<Props, State> {
                     const {
                       target: { value },
                     } = event;
-                    const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType);
+                    const data = this.getBubbleChartData(this.state.selectedParticipantId, value as VisualizationType);
                     this.setState({
                       data: data.data,
-                      selectedVizualizationType: value,
+                      selectedVizualizationType: value as VisualizationType,
+                      sliderValueMin: 0,
+                      sliderValueMax: data.max,
+                      sliderValueRange: [0, data.max],
                       durationMultiplier: data.durationMultiplier,
                     });
                   }}
                 >
-                  {Object.values(VizualizationType).map((type) => (
+                  {Object.values(VisualizationType).map((type) => (
                     <MenuItem
                       key={type}
                       value={type}
