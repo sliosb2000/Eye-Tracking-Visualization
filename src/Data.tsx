@@ -51,10 +51,10 @@ export async function loadData() {
             const data = text.split(/[\s,]+/);
             switch(DataType[k]) {
               case DataType.EVD:
-                console.log(`p${i}`, "EVD");
+                //console.log(`p${i}`, "EVD");
                 break;
               case DataType.FXD:
-                console.log(`p${i}`, "FXD");
+                //console.log(`p${i}`, "FXD");
                 const dataArray = new Array<FXD>();
                 for (let i=0; i<data.length-1; i+=5) {
                   const dataElement: FXD = {
@@ -69,7 +69,7 @@ export async function loadData() {
                 dataTypeMap.set(k, dataArray);
                 break;
               case DataType.GZD:
-                console.log(`p${i}`, "GZD");
+                //console.log(`p${i}`, "GZD");
                 break;
             }
           });

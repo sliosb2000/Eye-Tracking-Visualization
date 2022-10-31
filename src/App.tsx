@@ -10,7 +10,7 @@ import {
 import { Bubble } from 'react-chartjs-2';
 import { faker } from '@faker-js/faker';
 import { DataFiles, VizualizationType, DataType, FXD } from './Data';
-
+import {ChartData} from "chart.js";
 ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
 
 class App extends React.Component {
@@ -37,25 +37,29 @@ class App extends React.Component {
     //     },
     //   ],
     // };
-    const participantId = "p3";
-    const participantData: FXD[] = DataFiles.get(participantId)!.get(VizualizationType.GRAPH)!.get(DataType.FXD)! as FXD[];
-    const chartData: BubbleDataPoint[] = participantData.map(row => {
-      const dataPoint: BubbleDataPoint = {
-        x: row.x,
-        y: row.y,
-        r: 10,
-      }
-      return dataPoint;
-    })
-    const data = {
-      datasets: [
-        {
-          label: participantId,
-          data: chartData,
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
-        },
-      ],
+    var peopleToShow = [1, 2, 3]
+    let data:ChartData<"bubble"> = {
+      datasets: []
     };
+    for(let  i = 0; i < peopleToShow.length; i++){
+      console.log(peopleToShow[i]);
+      const participantId = "p" + peopleToShow[i];
+      const participantData: FXD[] = DataFiles.get(participantId)!.get(VizualizationType.GRAPH)!.get(DataType.FXD)! as FXD[];
+      const chartData: BubbleDataPoint[] = participantData.map(row => {
+        const dataPoint: BubbleDataPoint = {
+          x: row.x,
+          y: row.y,
+          r: 10,
+        }
+        return dataPoint;
+      })
+      data.datasets.push({
+        label: participantId,
+        data: chartData,
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      });
+    }
+
 
     const options = {
       scales: {
