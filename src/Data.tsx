@@ -1,3 +1,4 @@
+// File Naming Conventions
 export const participants = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 27, 28, 30, 31, 32, 33, 34, 35, 36];
 export enum VizualizationType {
   GRAPH = "graph",
@@ -12,6 +13,13 @@ export enum DataType {
 const fileType = ".txt";
 const dataPath = "./data/Archive";
 
+/* Map mirroring data file heiarchy
+ *  ParticipantId: string
+ *    VizualizationType: VizualizationType.GRAPH | VizualizationType.Tree
+ *       DataType: DataType.FXD | DataType.EVD | DataType.GZD
+ * 
+ * Usage: DataFiles.get("p3")!.get(VizualizationType.GRAPH)!.get(DataType.FXD)! as FXD[]
+ */
 export const DataFiles = new Map<string, Map<VizualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>>();
 
 export interface EVD {
