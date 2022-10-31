@@ -8,6 +8,7 @@ import {
   BubbleDataPoint,
   ChartData,
 } from 'chart.js';
+import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts";
 import React from "react";
 import { Bubble } from "react-chartjs-2";
 import { VizualizationType, FXD, DataFiles, DataType, participants } from "../Data";
@@ -24,28 +25,48 @@ interface State {
   sliderValueRange: number[];
   data: ChartData<"bubble">;
   selectedParticipantId: string;
+  selectedVizualizationType: VizualizationType | string;
   durationMultiplier: number;
 }
 
 class BubbleChartCard extends React.Component<Props, State> {
+  private humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
   constructor(props: Props) {
     super(props);
 
     ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
 
+    this.humanizer.addLanguage("shortEn", {
+      y: () => "y",
+      mo: () => "mo",
+      w: () => "w",
+      d: () => "d",
+      h: () => "h",
+      m: () => "m",
+      s: () => "s",
+      ms: () => "ms",
+      decimal: ".",
+    });
+    this.humanizer.setOptions({
+      language: "shortEn",
+      spacer: "",
+      units: ["m", "s", "ms"],
+    });
+
     const data = this.getBubbleChartData("p1", VizualizationType.GRAPH);
     this.state = {
       data: data.data,
-      sliderValueMin: data.min,
+      sliderValueMin: 0,
       sliderValueMax: data.max,
-      sliderValueRange: [data.min, data.max],
+      sliderValueRange: [0, data.max],
       selectedParticipantId: "p1",
+      selectedVizualizationType: VizualizationType.GRAPH,
       durationMultiplier: data.durationMultiplier,
     }
   }
 
-  private getBubbleChartData(participantId: string, vizualizationType: VizualizationType, min?: number, max?: number) {
-    let participantData: FXD[] = DataFiles.get(participantId)!.get(vizualizationType)!.get(DataType.FXD)! as FXD[];
+  private getBubbleChartData(participantId: string, vizualizationType: string, min?: number, max?: number) {
+    let participantData: FXD[] = DataFiles.get(participantId)!.get(vizualizationType as VizualizationType)!.get(DataType.FXD)! as FXD[];
     if (min && max) {
       participantData = participantData.filter(data => {
         return data.time > min && data.time < max;
@@ -92,11 +113,11 @@ class BubbleChartCard extends React.Component<Props, State> {
             label: function(context: any) {
               const x = context.raw.x;
               const y = context.raw.y;
-              return `(x, y): (${x}, ${y})`;
+              return `(x, y): (${x}px, ${y}px)`;
             },
             afterLabel: function(context: any) {
               const duration = context.raw.r;
-              return `duration: ${Math.round(duration*1/that.state.durationMultiplier)}`;
+              return `duration: ${Math.round(duration*1/that.state.durationMultiplier)}ms`;
             }
           }
         },
@@ -124,17 +145,20 @@ class BubbleChartCard extends React.Component<Props, State> {
               min={this.state.sliderValueMin}
               max={this.state.sliderValueMax}
               onChange={(event: Event, newValue: number | number[]) =>{
-                const data = this.getBubbleChartData(this.state.selectedParticipantId, VizualizationType.GRAPH, (newValue as number[])[0],  (newValue as number[])[1]);
+                const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, (newValue as number[])[0],  (newValue as number[])[1]);
                 this.setState({
                   data: data.data,
                   sliderValueRange: newValue as number[],
                   durationMultiplier: data.durationMultiplier,
                 });
               }}
+              valueLabelFormat={(value) => {
+                return `${this.humanizer.humanize(value).replaceAll(",", "")}`;
+              }}
               valueLabelDisplay="auto"
             />
 
-            <div>
+            <div className="selection">
               <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
                 <InputLabel id="participant-ids-label">Participant</InputLabel>
                 <Select
@@ -145,7 +169,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                     const {
                       target: { value },
                     } = event;
-                    const data = this.getBubbleChartData(this.state.selectedParticipantId, VizualizationType.GRAPH);
+                    const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType);
                     this.setState({
                       data: data.data,
                       selectedParticipantId: value,
@@ -163,11 +187,38 @@ class BubbleChartCard extends React.Component<Props, State> {
                   ))}
                 </Select>
               </FormControl>
+              <FormControl variant="filled" sx={{ m: 1, minWidth: 150 }}>
+                <InputLabel id="vizualization-types-label">Vizualization Type</InputLabel>
+                <Select
+                  labelId="vizualization-types-label"
+                  id="vizualization-types"
+                  value={this.state.selectedVizualizationType}
+                  onChange={(event: SelectChangeEvent) => {
+                    const {
+                      target: { value },
+                    } = event;
+                    const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType);
+                    this.setState({
+                      data: data.data,
+                      selectedVizualizationType: value,
+                      durationMultiplier: data.durationMultiplier,
+                    });
+                  }}
+                >
+                  {Object.values(VizualizationType).map((type) => (
+                    <MenuItem
+                      key={type}
+                      value={type}
+                    >
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
           </div>
         </div>  
     );
   }
 }
-
 export default BubbleChartCard;

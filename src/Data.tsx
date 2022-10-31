@@ -13,7 +13,8 @@ export enum DataType {
 const fileType = ".txt";
 const dataPath = "./data/Archive";
 
-/* Map mirroring data file heiarchy
+/**
+ *  Map mirroring data file heiarchy
  *  ParticipantId: string
  *    VizualizationType: VizualizationType.GRAPH | VizualizationType.Tree
  *       DataType: DataType.FXD | DataType.EVD | DataType.GZD
