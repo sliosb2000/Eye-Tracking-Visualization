@@ -47,6 +47,7 @@ class BubbleChartCard extends React.Component<Props, State> {
 
   private humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
   private playInterval?: NodeJS.Timeout;
+  private participantData?: FXD[];
 
   constructor(props: Props) {
     super(props);
@@ -98,17 +99,17 @@ class BubbleChartCard extends React.Component<Props, State> {
   }
 
   private getBubbleChartData(participantId: string, vizualizationType: VisualizationType, min?: number, max?: number, opacity?: number) {
-    let participantData: FXD[] = DataFiles.get(participantId)!.get(vizualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
+    this.participantData = DataFiles.get(participantId)!.get(vizualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
     if (min !== undefined && max !== undefined) {
-      participantData = participantData.filter(data => {
+      this.participantData = this.participantData.filter(data => {
         return data.time > min && data.time < max;
       });
     }
-    const durationMap = participantData.map(a => { return a.duration });
+    const durationMap = this.participantData.map(a => { return a.duration });
     const minDuration = Math.min(...durationMap);
     const maxDuration = Math.max(...durationMap);
     const durationMultiplier = 1/(maxDuration-minDuration)*25;
-    const chartData: BubbleDataPoint[] = participantData.map(row => {
+    const chartData: BubbleDataPoint[] = this.participantData.map(row => {
       const dataPoint: BubbleDataPoint = {
         x: row.x,
         y: row.y,
@@ -126,8 +127,8 @@ class BubbleChartCard extends React.Component<Props, State> {
 
     return {
       data: data,
-      min: Math.min(...participantData.map(o => o.time)),
-      max: Math.max(...participantData.map(o => o.time)),
+      min: Math.min(...this.participantData.map(o => o.time)),
+      max: Math.max(...this.participantData.map(o => o.time)),
       durationMultiplier: durationMultiplier,
     }
   }
@@ -137,9 +138,7 @@ class BubbleChartCard extends React.Component<Props, State> {
     const options = {
       onClick: function(evt: any, element: any) {
         if(element.length > 0) {
-          const participantData = DataFiles.get(that.state.selectedParticipantId)!.get(that.state.selectedVizualizationType)!.get(DataType.FXD)! as FXD[];
-          console.log(element[0].index)
-          console.log(participantData[element[0].index])
+          
         }
       },
       plugins: {
@@ -150,6 +149,10 @@ class BubbleChartCard extends React.Component<Props, State> {
               return context[0].label;
             },
             label: function(context: any) {
+              if (that.participantData) {
+                console.log(that.participantData[context.dataIndex]);
+              }
+              
               const x = context.raw.x;
               const y = context.raw.y;
               return `(x, y): (${x}px, ${y}px)`;
