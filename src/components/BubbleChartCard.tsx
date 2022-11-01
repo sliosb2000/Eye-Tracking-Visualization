@@ -14,10 +14,11 @@ import React from "react";
 import { Bubble } from "react-chartjs-2";
 import { VisualizationType , FXD, DataFiles, DataType, participants } from "../Data";
 
-const MIN_SLIDER_VALUE = 0;
 const DEFAULT_DATA = {
   participantId: "p1",
   visualizationType: VisualizationType.GRAPH,
+  timeSliderMinValue: 0,
+  opacitySliderValue: 0.3,
 }
 
 interface Props {
@@ -27,13 +28,17 @@ interface Props {
 }
 
 interface State {
-  sliderValueMax: number;
-  sliderValueMin: number;
-  sliderValueRange: number[];
   data: ChartData<"bubble">;
   selectedParticipantId: string;
   selectedVizualizationType: VisualizationType;
   durationMultiplier: number;
+
+  timeSliderMin: number;
+  timeSliderMax: number;
+  timeSliderRange: number[];
+
+  opacitySliderValue: number;
+
   buttonSelectedState: boolean;
 }
 
@@ -70,12 +75,16 @@ class BubbleChartCard extends React.Component<Props, State> {
     const data = this.getBubbleChartData(DEFAULT_DATA.participantId, DEFAULT_DATA.visualizationType);
     this.state = {
       data: data.data,
-      sliderValueMin: MIN_SLIDER_VALUE,
-      sliderValueMax: data.max,
-      sliderValueRange: [MIN_SLIDER_VALUE, data.max],
       selectedParticipantId: DEFAULT_DATA.participantId,
       selectedVizualizationType: DEFAULT_DATA.visualizationType,
       durationMultiplier: data.durationMultiplier,
+
+      timeSliderMin: DEFAULT_DATA.timeSliderMinValue,
+      timeSliderMax: data.max,
+      timeSliderRange: [DEFAULT_DATA.timeSliderMinValue, data.max],
+
+      opacitySliderValue: DEFAULT_DATA.opacitySliderValue,
+      
       buttonSelectedState: false,
     }
   }
@@ -177,15 +186,15 @@ class BubbleChartCard extends React.Component<Props, State> {
                   width: "95%"
                 }}
                 getAriaLabel={() => 'Time Range'}
-                value={this.state.sliderValueRange}
-                min={this.state.sliderValueMin}
-                max={this.state.sliderValueMax}
+                value={this.state.timeSliderRange}
+                min={this.state.timeSliderMin}
+                max={this.state.timeSliderMax}
                 step={1000}
                 onChange={(event: Event, newValue: number | number[]) =>{
                   const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, (newValue as number[])[0],  (newValue as number[])[1]);
                   this.setState({
                     data: data.data,
-                    sliderValueRange: newValue as number[],
+                    timeSliderRange: newValue as number[],
                     durationMultiplier: data.durationMultiplier,
                   });
                 }}
@@ -203,7 +212,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                 onChange={() =>{
                   if (!this.state.buttonSelectedState) {
                     this.playInterval = setInterval(() => {
-                      if (this.state.sliderValueRange[1] >= this.state.sliderValueMax) {
+                      if (this.state.timeSliderRange[1] >= this.state.timeSliderMax) {
                         if (this.playInterval) {
                           clearInterval(this.playInterval);
                           this.setState({
@@ -212,10 +221,10 @@ class BubbleChartCard extends React.Component<Props, State> {
                           return;
                         }
                       }
-                      const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, this.state.sliderValueRange[0], this.state.sliderValueRange[1]);
+                      const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, this.state.timeSliderRange[0], this.state.timeSliderRange[1]);
                       this.setState({
                         data: data.data,
-                        sliderValueRange: [this.state.sliderValueRange[0], this.state.sliderValueRange[1] + 1000],
+                        timeSliderRange: [this.state.timeSliderRange[0], this.state.timeSliderRange[1] + 1000],
                         durationMultiplier: data.durationMultiplier,
                       });
                     }, 1000);
@@ -252,9 +261,9 @@ class BubbleChartCard extends React.Component<Props, State> {
                     this.setState({
                       data: data.data,
                       selectedParticipantId: value,
-                      sliderValueMin: 0,
-                      sliderValueMax: data.max,
-                      sliderValueRange: [0, data.max],
+                      timeSliderMin: 0,
+                      timeSliderMax: data.max,
+                      timeSliderRange: [0, data.max],
                       durationMultiplier: data.durationMultiplier,
                       buttonSelectedState: false,
                     });
@@ -284,9 +293,9 @@ class BubbleChartCard extends React.Component<Props, State> {
                     this.setState({
                       data: data.data,
                       selectedVizualizationType: value as VisualizationType,
-                      sliderValueMin: 0,
-                      sliderValueMax: data.max,
-                      sliderValueRange: [0, data.max],
+                      timeSliderMin: 0,
+                      timeSliderMax: data.max,
+                      timeSliderRange: [0, data.max],
                       durationMultiplier: data.durationMultiplier,
                       buttonSelectedState: false,
                     });
