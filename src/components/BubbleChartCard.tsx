@@ -214,7 +214,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                                 return;
                               }
                             }
-                            const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, this.state.timeRange[0], this.state.timeRange[1]);
+                            const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, this.state.timeRange[0], this.state.timeRange[1], this.state.opacity);
                             this.setState({
                               data: data.data,
                               timeRange: [this.state.timeRange[0], this.state.timeRange[1] + 1000],
@@ -279,7 +279,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                     const {
                       target: { value },
                     } = event;
-                    const data = this.getBubbleChartData(value, this.state.selectedVizualizationType);
+                    const data = this.getBubbleChartData(value, this.state.selectedVizualizationType, undefined, undefined, this.state.opacity);
                     this.setState({
                       data: data.data,
                       selectedParticipantId: value,
@@ -311,7 +311,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                     const {
                       target: { value },
                     } = event;
-                    const data = this.getBubbleChartData(this.state.selectedParticipantId, value as VisualizationType);
+                    const data = this.getBubbleChartData(this.state.selectedParticipantId, value as VisualizationType, undefined, undefined, this.state.opacity);
                     this.setState({
                       data: data.data,
                       selectedVizualizationType: value as VisualizationType,
