@@ -1,5 +1,5 @@
 import { PlayArrowRounded } from "@mui/icons-material";
-import { Slider, FormControl, InputLabel, Select, SelectChangeEvent, MenuItem, ToggleButton, Box, Typography, Grid, Input } from "@mui/material";
+import { Slider, FormControl, InputLabel, Select, SelectChangeEvent, MenuItem, ToggleButton, Box, Typography, Grid, Input, Divider } from "@mui/material";
 import {
   Chart as ChartJS,
   LinearScale,
@@ -42,9 +42,6 @@ interface State {
 
   playback: boolean;
 }
-
-//TODO: slider/input field opacity for bubble
-//TODO: slider scale for bubble radius
 
 class BubbleChartCard extends React.Component<Props, State> {
 
@@ -171,6 +168,9 @@ class BubbleChartCard extends React.Component<Props, State> {
       }}>
           <h1>Bubble Chart</h1>
           <Bubble options={options} data={this.state.data} />
+
+          <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px"}}/>
+
           <h2>Chart Controls</h2>
           <div className="menu">
             <div className="slider">
@@ -264,6 +264,8 @@ class BubbleChartCard extends React.Component<Props, State> {
                 }}
               />
             </div>
+
+            <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px"}}/>
 
             <h2>Data Selection</h2>
             <div className="selection">

@@ -46,19 +46,6 @@ class InputSlider extends React.Component<Props, State> {
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                         this.props.onInputChange(event);
                       }}
-                    //   onBlur={() => {
-                    //     let value = this.props.value;
-                    //     if (value < 0) {
-                    //       value = 0;
-                    //     } else if (value > 1) {
-                    //       value = 1;
-                    //     }
-                    //     const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, this.state.timeRange[0], this.state.timeRange[1], opacity);
-                    //     this.setState({
-                    //       data: data.data,
-                    //       opacity: opacity,
-                    //     });
-                    //   }}
                       inputProps={{
                         step: this.props.step,
                         min: this.props.min,
