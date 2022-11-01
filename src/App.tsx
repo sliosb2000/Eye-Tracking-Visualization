@@ -1,4 +1,4 @@
-import { Box, Divider } from '@mui/material';
+import { Divider } from '@mui/material';
 import React from 'react';
 import BubbleChartCard from './components/BubbleChartCard';
 
