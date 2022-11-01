@@ -1,5 +1,5 @@
 import { PlayArrowRounded } from "@mui/icons-material";
-import { Slider, FormControl, InputLabel, Select, SelectChangeEvent, MenuItem, ToggleButton, Box, Typography, Grid, Input, Divider } from "@mui/material";
+import { Slider, FormControl, InputLabel, Select, SelectChangeEvent, MenuItem, ToggleButton, Box,  Grid, Divider } from "@mui/material";
 import {
   Chart as ChartJS,
   LinearScale,
@@ -107,7 +107,7 @@ class BubbleChartCard extends React.Component<Props, State> {
     const durationMap = participantData.map(a => { return a.duration });
     const minDuration = Math.min(...durationMap);
     const maxDuration = Math.max(...durationMap);
-    const durationMultiplier = 1/(maxDuration-minDuration)*25
+    const durationMultiplier = 1/(maxDuration-minDuration)*25;
     const chartData: BubbleDataPoint[] = participantData.map(row => {
       const dataPoint: BubbleDataPoint = {
         x: row.x,
@@ -137,6 +137,7 @@ class BubbleChartCard extends React.Component<Props, State> {
     const options = {
       plugins: {
         tooltip: {
+          display: true,
           callbacks: {
             title: function(context: any) {
               return context[0].label;
@@ -157,6 +158,9 @@ class BubbleChartCard extends React.Component<Props, State> {
         y: {
           beginAtZero: true,
         },
+        x: {
+          beginAtZero: true,
+        },
       },
     };
 
@@ -169,7 +173,7 @@ class BubbleChartCard extends React.Component<Props, State> {
           <h1>Bubble Chart</h1>
           <Bubble options={options} data={this.state.data} />
 
-          <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px"}}/>
+          <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
 
           <h2>Chart Controls</h2>
           <div className="menu">
@@ -265,7 +269,7 @@ class BubbleChartCard extends React.Component<Props, State> {
               />
             </div>
 
-            <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px"}}/>
+            <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
 
             <h2>Data Selection</h2>
             <div className="selection">
