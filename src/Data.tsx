@@ -24,7 +24,12 @@ const dataPath = "./data/Archive";
 export const DataFiles = new Map<string, Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>>();
 
 export interface EVD {
-
+  time: number,
+  event: string,
+  eventKey: number,
+  data1: number,
+  data2: number,
+  description: string,
 }
 export interface FXD {
   id: number,
@@ -34,7 +39,6 @@ export interface FXD {
   y: number,
 }
 export interface GZD {
-
 }
 
 export async function loadData() {  
@@ -52,7 +56,18 @@ export async function loadData() {
             const data = text.split(/[\s,]+/);
             switch(DataType[k]) {
               case DataType.EVD:
-                //TODO
+                const EVDdataArray = new Array<EVD>();
+                for(let l = 0; l<data.length-1; l+=6){
+                  const dataElement: EVD = {
+                    time: Number(data[l]),
+                    event: String(data[l+1]),
+                    eventKey: Number(data[l+2]),
+                    data1: Number(data[l+3]),
+                    data2: Number(data[l+4]),
+                    description: String(data[l+5])
+                  }
+                }
+
                 break;
               case DataType.FXD:
                 const dataArray = new Array<FXD>();
