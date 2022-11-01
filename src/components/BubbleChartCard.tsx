@@ -135,6 +135,13 @@ class BubbleChartCard extends React.Component<Props, State> {
   render() {
     const that = this;
     const options = {
+      onClick: function(evt: any, element: any) {
+        if(element.length > 0) {
+          const participantData = DataFiles.get(that.state.selectedParticipantId)!.get(that.state.selectedVizualizationType)!.get(DataType.FXD)! as FXD[];
+          console.log(element[0].index)
+          console.log(participantData[element[0].index])
+        }
+      },
       plugins: {
         tooltip: {
           display: true,
@@ -171,7 +178,10 @@ class BubbleChartCard extends React.Component<Props, State> {
         margin: this.props.margin ?? "0 auto",
       }}>
           <h1>Bubble Chart</h1>
-          <Bubble options={options} data={this.state.data} />
+          <Bubble 
+            options={options}
+            data={this.state.data}
+          />
 
           <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
 
