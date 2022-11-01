@@ -1,5 +1,5 @@
 import { PlayArrowRounded } from "@mui/icons-material";
-import { Slider, FormControl, InputLabel, Select, SelectChangeEvent, MenuItem, ToggleButton } from "@mui/material";
+import { Slider, FormControl, InputLabel, Select, SelectChangeEvent, MenuItem, ToggleButton, Box, Typography, Grid } from "@mui/material";
 import {
   Chart as ChartJS,
   LinearScale,
@@ -172,78 +172,78 @@ class BubbleChartCard extends React.Component<Props, State> {
           <Bubble options={options} data={this.state.data} />
           
           <div className="menu">
-            <div className="slider" style={{
-              width: "100%",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-            }}>
-              <div style={{
-                width: "10px",
-              }} />
-              <Slider
-                style={{
-                  width: "95%"
-                }}
-                getAriaLabel={() => 'Time Range'}
-                value={this.state.timeSliderRange}
-                min={this.state.timeSliderMin}
-                max={this.state.timeSliderMax}
-                step={1000}
-                onChange={(event: Event, newValue: number | number[]) =>{
-                  const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, (newValue as number[])[0],  (newValue as number[])[1]);
-                  this.setState({
-                    data: data.data,
-                    timeSliderRange: newValue as number[],
-                    durationMultiplier: data.durationMultiplier,
-                  });
-                }}
-                valueLabelFormat={(value) => {
-                  return `${this.humanizer.humanize(value).replaceAll(",", "")}`;
-                }}
-                valueLabelDisplay="auto"
-              />
-              <div style={{
-                width: "20px",
-              }} />
-              <ToggleButton
-                value="check"
-                selected={this.state.buttonSelectedState}
-                onChange={() =>{
-                  if (!this.state.buttonSelectedState) {
-                    this.playInterval = setInterval(() => {
-                      if (this.state.timeSliderRange[1] >= this.state.timeSliderMax) {
-                        if (this.playInterval) {
-                          clearInterval(this.playInterval);
-                          this.setState({
-                            buttonSelectedState: false,
-                          });
-                          return;
+            <div className="slider">
+              <Box sx={{ width: "100%" }}>
+                <Typography id="time-slider" gutterBottom>
+                  Time
+                </Typography>
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item xs>
+                    <Slider
+                      style={{
+                        width: "95%"
+                      }}
+                      getAriaLabel={() => 'Time Range'}
+                      value={this.state.timeSliderRange}
+                      min={this.state.timeSliderMin}
+                      max={this.state.timeSliderMax}
+                      step={1000}
+                      onChange={(event: Event, newValue: number | number[]) =>{
+                        const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, (newValue as number[])[0],  (newValue as number[])[1]);
+                        this.setState({
+                          data: data.data,
+                          timeSliderRange: newValue as number[],
+                          durationMultiplier: data.durationMultiplier,
+                        });
+                      }}
+                      valueLabelFormat={(value) => {
+                        return `${this.humanizer.humanize(value).replaceAll(",", "")}`;
+                      }}
+                      valueLabelDisplay="auto"
+                    />
+                  </Grid>
+                  <Grid item>
+                    <ToggleButton
+                      value="check"
+                      selected={this.state.buttonSelectedState}
+                      onChange={() =>{
+                        if (!this.state.buttonSelectedState) {
+                          this.playInterval = setInterval(() => {
+                            if (this.state.timeSliderRange[1] >= this.state.timeSliderMax) {
+                              if (this.playInterval) {
+                                clearInterval(this.playInterval);
+                                this.setState({
+                                  buttonSelectedState: false,
+                                });
+                                return;
+                              }
+                            }
+                            const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, this.state.timeSliderRange[0], this.state.timeSliderRange[1]);
+                            this.setState({
+                              data: data.data,
+                              timeSliderRange: [this.state.timeSliderRange[0], this.state.timeSliderRange[1] + 1000],
+                              durationMultiplier: data.durationMultiplier,
+                            });
+                          }, 1000);
+                        } else {
+                          if (this.playInterval) {
+                            clearInterval(this.playInterval);
+                            this.setState({
+                              buttonSelectedState: false,
+                            });
+                          }
                         }
-                      }
-                      const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, this.state.timeSliderRange[0], this.state.timeSliderRange[1]);
-                      this.setState({
-                        data: data.data,
-                        timeSliderRange: [this.state.timeSliderRange[0], this.state.timeSliderRange[1] + 1000],
-                        durationMultiplier: data.durationMultiplier,
-                      });
-                    }, 1000);
-                  } else {
-                    if (this.playInterval) {
-                      clearInterval(this.playInterval);
-                      this.setState({
-                        buttonSelectedState: false,
-                      });
-                    }
-                  }
 
-                  this.setState({
-                    buttonSelectedState: !this.state.buttonSelectedState,
-                  });
-                }}
-              >
-                <PlayArrowRounded />
-              </ToggleButton>
+                        this.setState({
+                          buttonSelectedState: !this.state.buttonSelectedState,
+                        });
+                      }}
+                    >
+                      <PlayArrowRounded />
+                    </ToggleButton>
+                  </Grid>
+                </Grid>
+              </Box>
             </div>
 
             <div className="selection">
