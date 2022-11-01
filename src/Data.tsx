@@ -44,7 +44,7 @@ export async function loadData() {
       const dataTypeMap = new Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>();
       for (const k of Object.values(DataType)) {
         const path = `${dataPath}/${i}/${i}.${j}${k}${fileType}`;
-        //console.log(path)
+        console.log(`Loading ${path}`);
         const file = require("".concat(path));
         await fetch(file)
           .then(response => response.text())
@@ -52,10 +52,9 @@ export async function loadData() {
             const data = text.split(/[\s,]+/);
             switch(DataType[k]) {
               case DataType.EVD:
-                console.log(i, "EVD");
+                //TODO
                 break;
               case DataType.FXD:
-                console.log(i, "FXD");
                 const dataArray = new Array<FXD>();
                 for (let l=0; l<data.length-1; l+=5) {
                   const dataElement: FXD = {
@@ -70,7 +69,7 @@ export async function loadData() {
                 dataTypeMap.set(k, dataArray);
                 break;
               case DataType.GZD:
-                console.log(i, "GZD");
+                //TODO
                 break;
             }
           });
