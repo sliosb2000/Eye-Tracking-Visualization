@@ -8,6 +8,8 @@ import {
   Legend,
   BubbleDataPoint,
   ChartData,
+  ChartOptions,
+  TooltipItem,
 } from 'chart.js';
 import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts";
 import React from "react";
@@ -134,21 +136,22 @@ class BubbleChartCard extends React.Component<Props, State> {
 
   render() {
     const that = this;
-    const options = {
+    const options: ChartOptions<"bubble"> = {
       plugins: {
         tooltip: {
-          display: true,
           callbacks: {
-            title: function(context: any) {
+            title: function(context: TooltipItem<"bubble">[]) {
               return context[0].label;
             },
-            label: function(context: any) {
-              const x = context.raw.x;
-              const y = context.raw.y;
+            label: function(context: TooltipItem<"bubble">) {
+              const rawData = context.raw as BubbleDataPoint;
+              const x = rawData.x;
+              const y = rawData.y;
               return `(x, y): (${x}px, ${y}px)`;
             },
-            afterLabel: function(context: any) {
-              const duration = context.raw.r;
+            afterLabel: function(context: TooltipItem<"bubble">) {
+              const rawData = context.raw as BubbleDataPoint;
+              const duration = rawData.r;
               return `duration: ${Math.round(duration*1/that.state.durationMultiplier)}ms`;
             }
           }
