@@ -14,7 +14,8 @@ interface State {
 
 class MessageCard extends React.Component<Props, State> {
 
-    private eventEndRef = React.createRef<HTMLDivElement>();
+    private messagesEnd: HTMLDivElement | null = null;
+    private messageContainer: HTMLDivElement | null = null;
 
     componentDidMount() {
         this.scrollToBottom();
@@ -25,7 +26,12 @@ class MessageCard extends React.Component<Props, State> {
     }
 
     private scrollToBottom = () => {
-        this.eventEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (this.messagesEnd && this.messageContainer) {
+            this.messageContainer.scrollTo({
+                top: this.messagesEnd.offsetTop,
+                behavior: "smooth",
+            });
+        }   
     }
 
     render() {
@@ -33,21 +39,24 @@ class MessageCard extends React.Component<Props, State> {
             <div
                 className="message-container"
                 style={{
-                overflowY: "scroll",
-                width: this.props.width,
-                height: this.props.height,
-                backgroundColor: this.props.backgroundColor,
+                    overflow: "auto",
+                    overflowY: "scroll",
+                    width: this.props.width,
+                    height: this.props.height,
+                    backgroundColor: this.props.backgroundColor,
                 }}
+                ref={(el) => { this.messageContainer = el; }}
             >
                 <div className="message-list">
-                {this.props.messages.map((message) => (
-                    <div>
-                        {message}
-                    </div>
-                ))}
-                </div>
-                <div style={{ float:"left", clear: "both" }}
-                    ref={this.props.scrollToBottom ? this.eventEndRef : undefined}>
+                    {this.props.messages.map((message) => (
+                        <div>
+                            {message}
+                        </div>
+                    ))}
+                    <div
+                        style={{ float:"left", clear: "both" }}
+                        ref={(el) => { this.messagesEnd = el; }}
+                    />
                 </div>
             </div>
         )
