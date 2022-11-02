@@ -48,8 +48,8 @@ class MessageCard extends React.Component<Props, State> {
                 ref={(el) => { this.messageContainer = el; }}
             >
                 <div className="message-list">
-                    {this.props.messages.map((message) => (
-                        <div>
+                    {this.props.messages.map((message, index) => (
+                        <div key={index}>
                             {message}
                         </div>
                     ))}
