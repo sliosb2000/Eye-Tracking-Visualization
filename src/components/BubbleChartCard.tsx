@@ -50,8 +50,6 @@ interface State {
 
 class BubbleChartCard extends React.Component<Props, State> {
 
-  private participantFXDData?: FXD[];
-
   private humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
   private playInterval?: NodeJS.Timeout;
 
@@ -106,7 +104,6 @@ class BubbleChartCard extends React.Component<Props, State> {
 
   private getBubbleChartData(participantId: string, visualizationType: VisualizationType, min?: number, max?: number, opacity?: number) {
     let participantFXDData = DataFiles.get(participantId)!.get(visualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
-    this.participantFXDData = participantFXDData;
     if (min !== undefined && max !== undefined) {
       participantFXDData = participantFXDData.filter(data => {
         return data.time > min && data.time < max;
