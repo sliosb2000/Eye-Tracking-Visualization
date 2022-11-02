@@ -10,11 +10,13 @@ import {
   ChartData,
   ChartOptions,
   TooltipItem,
+  Tick,
 } from 'chart.js';
 import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts";
 import React from "react";
 import { Bubble } from "react-chartjs-2";
-import { VisualizationType , FXD, DataFiles, DataType, participants } from "../Data";
+import { VisualizationType, DataFiles, DataType, participants } from "../data/Data";
+import { FXD } from "../data/Models/Raw/FXD";
 import InputSlider from "./InputSlider";
 
 const DEFAULT_DATA = {
@@ -28,6 +30,7 @@ interface Props {
   height?: string,
   width?: string;
   margin?: string;
+  
 }
 
 interface State {
@@ -46,6 +49,8 @@ interface State {
 }
 
 class BubbleChartCard extends React.Component<Props, State> {
+
+  private participantFXDData?: FXD[];
 
   private humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
   private playInterval?: NodeJS.Timeout;
@@ -100,17 +105,18 @@ class BubbleChartCard extends React.Component<Props, State> {
   }
 
   private getBubbleChartData(participantId: string, vizualizationType: VisualizationType, min?: number, max?: number, opacity?: number) {
-    let participantData: FXD[] = DataFiles.get(participantId)!.get(vizualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
+    let participantFXDData = DataFiles.get(participantId)!.get(vizualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
+    this.participantFXDData = participantFXDData;
     if (min !== undefined && max !== undefined) {
-      participantData = participantData.filter(data => {
+      participantFXDData = participantFXDData.filter(data => {
         return data.time > min && data.time < max;
       });
     }
-    const durationMap = participantData.map(a => { return a.duration });
+    const durationMap = participantFXDData.map(a => { return a.duration });
     const minDuration = Math.min(...durationMap);
     const maxDuration = Math.max(...durationMap);
     const durationMultiplier = 1/(maxDuration-minDuration)*25;
-    const chartData: BubbleDataPoint[] = participantData.map(row => {
+    const chartData: BubbleDataPoint[] = participantFXDData.map(row => {
       const dataPoint: BubbleDataPoint = {
         x: row.x,
         y: row.y,
@@ -128,12 +134,12 @@ class BubbleChartCard extends React.Component<Props, State> {
 
     return {
       data: data,
-      min: Math.min(...participantData.map(o => o.time)),
-      max: Math.max(...participantData.map(o => o.time)),
+      min: Math.min(...participantFXDData.map(o => o.time)),
+      max: Math.max(...participantFXDData.map(o => o.time)),
       durationMultiplier: durationMultiplier,
     }
   }
-
+  
   render() {
     const that = this;
     const options: ChartOptions<"bubble"> = {
@@ -159,9 +165,19 @@ class BubbleChartCard extends React.Component<Props, State> {
       },
       scales: {
         y: {
+          ticks: {
+            callback: function(value: string | number, index: number, ticks: Tick[]) {
+              return `${value}px`;
+            }
+          },
           beginAtZero: true,
         },
         x: {
+          ticks: {
+            callback: function(value: string | number, index: number, ticks: Tick[]) {
+              return `${value}px`;
+            }
+          },
           beginAtZero: true,
         },
       },
@@ -262,7 +278,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                     max={this.state.timeMax}
                     step={1000}
                     onChange={(event: Event, newValue: number | number[]) =>{
-                      const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, (newValue as number[])[0],  (newValue as number[])[1]);
+                      const data = this.getBubbleChartData(this.state.selectedParticipantId, this.state.selectedVizualizationType, (newValue as number[])[0],  (newValue as number[])[1], this.state.opacity);
                       this.setState({
                         data: data.data,
                         timeRange: newValue as number[],

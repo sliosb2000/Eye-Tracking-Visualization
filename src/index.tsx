@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import { loadData } from './Data';
+import { loadData } from './data/Data';
 
 async function OnStart() {
   await loadData();
