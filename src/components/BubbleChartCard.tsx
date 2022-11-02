@@ -198,7 +198,8 @@ class BubbleChartCard extends React.Component<Props, State> {
               return `${value}px`;
             }
           },
-          beginAtZero: true,
+          suggestedMin: 0,
+          suggestedMax: 1200,
         },
         x: {
           ticks: {
@@ -206,7 +207,8 @@ class BubbleChartCard extends React.Component<Props, State> {
               return `${value}px`;
             }
           },
-          beginAtZero: true,
+          suggestedMin: 0,
+          suggestedMax: 1400,
         },
       },
     };
