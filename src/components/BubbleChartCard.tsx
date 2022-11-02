@@ -87,6 +87,22 @@ class BubbleChartCard extends React.Component<Props, State> {
     }
   }
 
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
+      if (this.props !== prevProps) {
+        const data = this.getBubbleChartData(this.props.selectedParticipantId, this.props.selectedVizualizationType);
+        this.setState({
+          data: data.data,
+          durationMultiplier: data.durationMultiplier,
+
+          timeMin: DEFAULT_DATA.timeSliderMinValue,
+          timeMax: data.max,
+          timeRange: [DEFAULT_DATA.timeSliderMinValue, data.max],
+
+          playback: false,
+        })
+      }
+  }
+
   componentDidMount() {
 
   }
