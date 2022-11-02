@@ -16,8 +16,10 @@ import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts
 import React from "react";
 import { Bubble } from "react-chartjs-2";
 import { VisualizationType, DataFiles, DataType, participants } from "../data/Data";
+import { EVD } from "../data/types/raw/EVD";
 import { FXD } from "../data/types/raw/FXD";
 import InputSlider from "./InputSlider";
+import MessageCard from "./ScrollableMessageCard";
 
 const DEFAULT_DATA = {
   participantId: "p1",
@@ -46,6 +48,8 @@ interface State {
   opacity: number;
 
   playback: boolean;
+
+  events: EVD[];
 }
 
 class BubbleChartCard extends React.Component<Props, State> {
@@ -76,6 +80,7 @@ class BubbleChartCard extends React.Component<Props, State> {
     });
     
     const data = this.getBubbleChartData(DEFAULT_DATA.participantId, DEFAULT_DATA.visualizationType);
+    const EVDData = this.getEVDData(DEFAULT_DATA.participantId, DEFAULT_DATA.visualizationType , data.max);
     this.state = {
       data: data.data,
       participantId: DEFAULT_DATA.participantId,
@@ -89,17 +94,39 @@ class BubbleChartCard extends React.Component<Props, State> {
       opacity: DEFAULT_DATA.opacity,
       
       playback: false,
+
+      events: EVDData,
     }
-  }
-
-  componentDidMount() {
-
   }
 
   componentWillUnmount() {
     if (this.playInterval) {
       clearInterval(this.playInterval);
     }
+  }
+
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any) {
+    const nextTimeRange = this.state.timeRange;
+      if (nextTimeRange[1] !== prevState.timeRange[1]) {
+        const participantEVDData = this.getEVDData(this.state.participantId, this.state.visualizationType, nextTimeRange[1]);
+        
+        this.setState({  
+          events: participantEVDData,
+        });
+      }
+  }
+
+  private getEVDData(participantId: string, visualizationType: VisualizationType, time: number, amount?: number) {
+    let participantEVDData = DataFiles.get(participantId)!.get(visualizationType)!.get(DataType.EVD)! as EVD[];
+        participantEVDData = participantEVDData
+          .filter(data => {
+            return data.time <= time;
+          })
+        if (amount) {
+          participantEVDData = participantEVDData.slice(-amount);
+        }
+      
+      return participantEVDData;
   }
 
   private getBubbleChartData(participantId: string, visualizationType: VisualizationType, min?: number, max?: number, opacity?: number) {
@@ -135,6 +162,10 @@ class BubbleChartCard extends React.Component<Props, State> {
       max: Math.max(...participantFXDData.map(o => o.time)),
       durationMultiplier: durationMultiplier,
     }
+  }
+
+  private getHumanizedTimeFromMilliseconds(timeMs: number) {
+    return this.humanizer.humanize(Math.floor(timeMs / 1000) * 1000).replaceAll(",", "");
   }
   
   render() {
@@ -283,7 +314,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                       });
                     }}
                     valueLabelFormat={(value) => {
-                      return `${this.humanizer.humanize(value).replaceAll(",", "")}`;
+                      return `${this.getHumanizedTimeFromMilliseconds(value)}`;
                     }}
                     valueLabelDisplay="auto"
                   />
@@ -330,9 +361,9 @@ class BubbleChartCard extends React.Component<Props, State> {
                 </Grid>
               </Grid>
             </Box>
+            <h3>Opacity</h3>
             <InputSlider
               width={"50%"}
-              label={"Opacity"}
               min={0}
               max={1}
               step={0.01}
@@ -355,6 +386,18 @@ class BubbleChartCard extends React.Component<Props, State> {
             />
           </div>
         </div>
+
+        <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
+
+        <h2>Events</h2>
+        <MessageCard 
+          height={"200px"}
+          backgroundColor={"#fafafa"}
+          scrollToBottom={true}
+          messages={this.state.events.map(event => {
+            return `${this.getHumanizedTimeFromMilliseconds(event.time)} ${event.event} ${event.data1 ? event.data1 : ""} ${event.data2 ? event.data2 : ""} ${event.description ? event.description : ""}`;
+          })}
+        />
       </div>  
     );
   }

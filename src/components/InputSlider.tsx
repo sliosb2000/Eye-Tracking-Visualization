@@ -4,13 +4,12 @@ import React from "react";
 interface Props {
     width?: string;
     height?: string;
-    label: string;
     min: number;
     max: number;
     step: number;
     value: number;
-    onSliderChange: (event: Event, newValue: number | number[]) => void;
-    onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onSliderChange?: (event: Event, newValue: number | number[]) => void;
+    onInputChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 interface State {
@@ -24,16 +23,15 @@ class InputSlider extends React.Component<Props, State> {
                 width: this.props.width ?? "100%",
                 height: this.props.height ?? "100%",
             }}>
-                <h3>{this.props.label}</h3>
                 <Grid container spacing={2} alignItems="center">
                   <Grid item xs>
                     <Slider
-                      getAriaLabel={() => this.props.label}
                       value={this.props.value}
                       min={0}
                       max={1}
                       step={0.01}
-                      onChange={(event: Event, newValue: number | number[]) =>{
+                      onChange={(event: Event, newValue: number | number[]) => {
+                        if (!this.props.onSliderChange) return;
                         this.props.onSliderChange(event, newValue);
                       }}
                       valueLabelDisplay="auto"
@@ -44,6 +42,7 @@ class InputSlider extends React.Component<Props, State> {
                       value={this.props.value}
                       size="small"
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                        if (!this.props.onInputChange) return;
                         this.props.onInputChange(event);
                       }}
                       inputProps={{
