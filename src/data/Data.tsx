@@ -1,6 +1,6 @@
-import { EVD, EVDEventKeyItems, EVDEventKey } from "./types/Raw/EVD";
-import { FXD } from "./types/Raw/FXD";
-import { GZD } from "./types/Raw/GZD";
+import { EVD, EVDEventKeyItems, EVDEventKey } from "./types/raw/EVD";
+import { FXD } from "./types/raw/FXD";
+import { GZD } from "./types/raw/GZD";
 
 // File Naming Conventions
 export const participants = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p10", "p11", "p12", "p13", "p14", "p15", "p16", "p17", "p18", "p19", "p20", "p21", "p23", "p24", "p25", "p27", "p28", "p30", "p31", "p32", "p33", "p34", "p35", "p36"];
@@ -15,21 +15,21 @@ export enum DataType {
 }
 
 const fileType = ".txt";
-const dataPath = "./Archive";
+const dataPath = "./data/raw";
 
 /**
  *  Map mirroring data file heiarchy
  *  ParticipantId: string
- *    VizualizationType: VizualizationType.GRAPH | VizualizationType.Tree
+ *    VisualizationType: VisualizationType.GRAPH | VisualizationType.Tree
  *       DataType: DataType.FXD | DataType.EVD | DataType.GZD
  * 
- * Usage: DataFiles.get("p3")!.get(VizualizationType.GRAPH)!.get(DataType.FXD)! as FXD[]
+ * Usage: DataFiles.get("p3")!.get(VisualizationType.GRAPH)!.get(DataType.FXD)! as FXD[]
  */
 export const DataFiles = new Map<string, Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>>();
 
 export async function loadData() {  
   for (const i of participants) {
-    const vizualizationTypeMap = new Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>();
+    const visualizationTypeMap = new Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>();
     for (const j of Object.values(VisualizationType)) {
       const dataTypeMap = new Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>();
       for (const k of Object.values(DataType)) {
@@ -110,8 +110,8 @@ export async function loadData() {
             }  
           });
       }
-      vizualizationTypeMap.set(j, dataTypeMap);
+      visualizationTypeMap.set(j, dataTypeMap);
     }
-    DataFiles.set(i, vizualizationTypeMap);
+    DataFiles.set(i, visualizationTypeMap);
   }
 }
