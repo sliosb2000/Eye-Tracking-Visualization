@@ -1,14 +1,27 @@
 import React from "react";
-
+import { VisualizationType , FXD, EVD, DataFiles, DataType, participants } from "../Data";
+const DEFAULT_DATA = {
+  participantId: "p1",
+  visualizationType: VisualizationType.GRAPH,
+}
 interface Props {
     height?: string,
     width?: string;
     margin?: string;
+    selectedParticipantId: string;
+    selectedVizualizationType: VisualizationType;
+    highlightedTime?: number;
 }
 interface State {
+  timeMin?: number;
+  timeMax?: number;
 
 }
 class DougnutChartCard extends React.Component<Props, State>{
+  private participantDataEVD?: EVD[];
+  constructor(props: Props) {
+    super(props);
+  }
     render() {
         return(
             <div className= "DougnutChartCard">

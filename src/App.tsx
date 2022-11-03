@@ -98,6 +98,8 @@ class App extends React.Component<Props,State> {
           width="70%"
         />
         <DoughnutChartCard
+        selectedParticipantId={this.state.selectedParticipantId} 
+        selectedVizualizationType={this.state.selectedVisualizationType}
           width="70%"
         />
 
