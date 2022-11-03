@@ -35,24 +35,26 @@ interface Props {
 }
 
 interface State {
-  data: ChartData<"bubble">;
-  durationMultiplier: number;
+  bubbleChartDataSets: ChartData<"bubble">;
 
-  timeMin: number;
   timeMax: number;
   timeRange: number[];
 
   opacity: number;
 
   playback: boolean;
-
-  events: EVD[];
 }
 
 class BubbleChartCard extends React.Component<Props, State> {
 
   private humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
   private playInterval?: NodeJS.Timeout;
+
+  private EVDData: EVD[] = [];
+  private FXDData: FXD[] = [];
+
+  private maxTime: number = 0;
+  private durationMultiplier: number = 1;
 
   constructor(props: Props) {
     super(props);
@@ -76,22 +78,17 @@ class BubbleChartCard extends React.Component<Props, State> {
       units: ["m", "s", "ms"],
     });
     
-    const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType);
-    const timeRange = [DEFAULT_DATA.timeMin, data.max];
-    const EVDData = this.getEVDData(this.props.participantId, this.props.visualizationType, timeRange);
+    this.updateData(this.props.participantId, this.props.visualizationType);
+    
     this.state = {
-      data: data.data,
-      durationMultiplier: data.durationMultiplier,
+      bubbleChartDataSets: this.getBubbleChartDatasets(this.durationMultiplier, DEFAULT_DATA.opacity),
 
-      timeMin: DEFAULT_DATA.timeMin,
-      timeMax: data.max,
-      timeRange: timeRange,
+      timeMax: this.maxTime,
+      timeRange: [DEFAULT_DATA.timeMin, this.maxTime],
 
       opacity: DEFAULT_DATA.opacity,
       
       playback: false,
-
-      events: EVDData,
     }
   }
 
@@ -103,58 +100,65 @@ class BubbleChartCard extends React.Component<Props, State> {
 
   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
     if (this.props.participantId !== prevProps.participantId || this.props.visualizationType !== prevProps.visualizationType) {
-      const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType, undefined ,this.state.opacity);
-      this.setState({
-        data: data.data,
-        durationMultiplier: data.durationMultiplier,
+      this.updateData(this.props.participantId, this.props.visualizationType);
 
-        timeMin: DEFAULT_DATA.timeMin,
-        timeMax: data.max,
-        timeRange: [DEFAULT_DATA.timeMin, data.max],
+      this.setState({
+        bubbleChartDataSets: this.getBubbleChartDatasets(this.durationMultiplier, this.state.opacity),
+
+        timeMax: this.maxTime,
+        timeRange: [DEFAULT_DATA.timeMin, this.maxTime],
 
         playback: false,
       });
     }
-
-    const nextTimeRange = this.state.timeRange;
-      if (nextTimeRange[1] !== prevState.timeRange[1]) {
-        const participantEVDData = this.getEVDData(this.props.participantId, this.props.visualizationType, nextTimeRange);
-        
-        this.setState({  
-          events: participantEVDData,
-        });
-      }
   }
 
-  private getEVDData(participantId: string, visualizationType: VisualizationType, timeRange?: number[], amount?: number) {
-    let participantEVDData = DataFiles.get(participantId)!.get(visualizationType)!.get(DataType.EVD)! as EVD[];
+  private updateData(participantId: string, visualizationType: VisualizationType, timeRange?: number[]) {
+    this.updateFXDData(participantId, visualizationType, timeRange);
+    this.updateEVDData(participantId, visualizationType, timeRange);
+  }
+
+  private updateFXDData(participantId: string, visualizationType: VisualizationType, timeRange?: number[], amount?: number) {
+    let FXDData = DataFiles.get(participantId)!.get(visualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
     if (timeRange) {
       const timeOffset = 1000;
-      participantEVDData = participantEVDData
-        .filter(data => {
+      FXDData = FXDData.filter(data => {
+        return data.time > timeRange[0] + timeOffset && data.time <= timeRange[1] + timeOffset;
+      });
+    }
+
+    if (amount) {
+      FXDData = FXDData.slice(-amount);
+    }
+
+    const durationMap = FXDData.map(a => { return a.duration });
+    const minDuration = DEFAULT_DATA.timeMin;
+    const maxDuration = Math.max(...durationMap);
+    this.durationMultiplier = 1/(maxDuration-minDuration)*25;
+    
+    this.maxTime = Math.max(...FXDData.map(o => o.time));
+
+    this.FXDData = FXDData;
+  }
+
+  private updateEVDData(participantId: string, visualizationType: VisualizationType, timeRange?: number[], amount?: number) {
+    let EVDData = DataFiles.get(participantId)!.get(visualizationType)!.get(DataType.EVD)! as EVD[];
+    if (timeRange) {
+      const timeOffset = 1000;
+      EVDData = EVDData.filter(data => {
           return data.time > timeRange[0] + timeOffset && data.time <= timeRange[1] + timeOffset;
         });
     }
-    
+
     if (amount) {
-      participantEVDData = participantEVDData.slice(-amount);
+      EVDData = EVDData.slice(-amount);
     }
   
-    return participantEVDData;
+    this.EVDData = EVDData;
   }
 
-  private getBubbleChartData(participantId: string, visualizationType: VisualizationType, timeRange?: number[], opacity?: number) {
-    let participantFXDData = DataFiles.get(participantId)!.get(visualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
-    if (timeRange) {
-      participantFXDData = participantFXDData.filter(data => {
-        return data.time > timeRange[0] && data.time <= timeRange[1];
-      });
-    }
-    const durationMap = participantFXDData.map(a => { return a.duration });
-    const minDuration = Math.min(...durationMap);
-    const maxDuration = Math.max(...durationMap);
-    const durationMultiplier = 1/(maxDuration-minDuration)*25;
-    const chartData: BubbleDataPoint[] = participantFXDData.map(row => {
+  private getBubbleChartDatasets(durationMultiplier: number, opacity?: number) {
+    const chartData: BubbleDataPoint[] = this.FXDData.map(row => {
       const dataPoint: BubbleDataPoint = {
         x: row.x,
         y: row.y,
@@ -162,20 +166,15 @@ class BubbleChartCard extends React.Component<Props, State> {
       }
       return dataPoint;
     });
-    const data: ChartData<"bubble"> = {
+    const datasets: ChartData<"bubble"> = {
       datasets: [{
         label: DataType.FXD,
         data: chartData,
-        backgroundColor: `rgba(255, 99, 132, ${opacity ?? DEFAULT_DATA.opacity})`,
+        backgroundColor: `rgba(255, 99, 132, ${opacity})`,
       }],
     };
 
-    return {
-      data: data,
-      min: Math.min(...participantFXDData.map(o => o.time)),
-      max: Math.max(...participantFXDData.map(o => o.time)),
-      durationMultiplier: durationMultiplier,
-    }
+    return datasets;
   }
 
   private getHumanizedTimeFromMilliseconds(timeMs: number) {
@@ -200,7 +199,7 @@ class BubbleChartCard extends React.Component<Props, State> {
             afterLabel: function(context: TooltipItem<"bubble">) {
               const rawData = context.raw as BubbleDataPoint;
               const duration = rawData.r;
-              return `duration: ${Math.round(duration*1/that.state.durationMultiplier)}ms`;
+              return `duration: ${Math.round(duration*1/that.durationMultiplier)}ms`;
             }
           }
         },
@@ -237,7 +236,7 @@ class BubbleChartCard extends React.Component<Props, State> {
         <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
 
         <h1>Chart</h1>
-        <Bubble options={options} data={this.state.data} />
+        <Bubble options={options} data={this.state.bubbleChartDataSets} />
 
         <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
 
@@ -251,15 +250,15 @@ class BubbleChartCard extends React.Component<Props, State> {
                   <Slider
                     getAriaLabel={() => 'Time Range'}
                     value={this.state.timeRange}
-                    min={this.state.timeMin}
+                    min={DEFAULT_DATA.timeMin}
                     max={this.state.timeMax}
                     step={1000}
-                    onChange={(event: Event, newValue: number | number[]) =>{
-                      const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType, newValue as number[], this.state.opacity);
+                    onChange={(event: Event, newValue: number | number[]) => {
+                      this.updateData(this.props.participantId, this.props.visualizationType, newValue as number[]);
+      
                       this.setState({
-                        data: data.data,
+                        bubbleChartDataSets: this.getBubbleChartDatasets(this.durationMultiplier, this.state.opacity),
                         timeRange: newValue as number[],
-                        durationMultiplier: data.durationMultiplier,
                       });
                     }}
                     valueLabelFormat={(value) => {
@@ -284,11 +283,12 @@ class BubbleChartCard extends React.Component<Props, State> {
                               return;
                             }
                           }
-                          const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType, this.state.timeRange, this.state.opacity);
+
+                          this.updateData(this.props.participantId, this.props.visualizationType, [this.state.timeRange[0], this.state.timeRange[1]+1000]);
+                          
                           this.setState({
-                            data: data.data,
-                            timeRange: [this.state.timeRange[0], this.state.timeRange[1] + 1000],
-                            durationMultiplier: data.durationMultiplier,
+                            bubbleChartDataSets: this.getBubbleChartDatasets(this.durationMultiplier, this.state.opacity),
+                            timeRange: [this.state.timeRange[0], this.state.timeRange[1]+1000],
                           });
                         }, 1000);
                       } else {
@@ -318,17 +318,20 @@ class BubbleChartCard extends React.Component<Props, State> {
               step={0.01}
               value={this.state.opacity}
               onSliderChange={(event: Event, newValue: number | number[]) =>{
-                const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType, this.state.timeRange, newValue as number);
+                this.updateData(this.props.participantId, this.props.visualizationType, this.state.timeRange);
+
                 this.setState({
-                  data: data.data,
+                  bubbleChartDataSets: this.getBubbleChartDatasets(this.durationMultiplier, newValue as number),
                   opacity: newValue as number,
                 });
               }}
               onInputChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 const newValue = event.target.value === '' ? 0 : Number(event.target.value);
-                const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType, this.state.timeRange, newValue);
+                
+                this.updateData(this.props.participantId, this.props.visualizationType, this.state.timeRange);
+
                 this.setState({
-                  data: data.data,
+                  bubbleChartDataSets: this.getBubbleChartDatasets(this.durationMultiplier, newValue as number),
                   opacity: newValue,
                 });
               }}
@@ -343,9 +346,11 @@ class BubbleChartCard extends React.Component<Props, State> {
           height={"200px"}
           backgroundColor={"#fafafa"}
           scrollToBottom={true}
-          messages={this.state.events.map(event => {
-            return `${this.getHumanizedTimeFromMilliseconds(event.time)} ${event.event} ${event.data1 ? event.data1 : ""} ${event.data2 ? event.data2 : ""} ${event.description ? event.description : ""}`;
-          })}
+          messages={
+            this.EVDData.map(event => {
+              return `${this.getHumanizedTimeFromMilliseconds(event.time)} ${event.event} ${event.data1 ? event.data1 : ""} ${event.data2 ? event.data2 : ""} ${event.description ? event.description : ""}`;
+            }
+          )}
         />
       </div>  
     );
