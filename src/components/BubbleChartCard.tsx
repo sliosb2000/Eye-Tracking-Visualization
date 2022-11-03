@@ -16,7 +16,7 @@ import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts
 import React from "react";
 import { Bubble } from "react-chartjs-2";
 import { VisualizationType, DataFiles, DataType } from "../data/Data";
-import { EVD } from "../data/types/raw/EVD";
+import { EVD, EVDEventKey } from "../data/types/raw/EVD";
 import { FXD } from "../data/types/raw/FXD";
 import InputSlider from "./InputSlider";
 import MessageCard from "./ScrollableMessageCard";
@@ -158,7 +158,7 @@ class BubbleChartCard extends React.Component<Props, State> {
   }
 
   private getBubbleChartDatasets(durationMultiplier: number, opacity?: number) {
-    const chartData: BubbleDataPoint[] = this.FXDData.map(row => {
+    const chartDataFXD: BubbleDataPoint[] = this.FXDData.map(row => {
       const dataPoint: BubbleDataPoint = {
         x: row.x,
         y: row.y,
@@ -166,11 +166,30 @@ class BubbleChartCard extends React.Component<Props, State> {
       }
       return dataPoint;
     });
+
+    const chartDataEVD: BubbleDataPoint[] = [];
+    this.EVDData.forEach(row => {
+      if (row.eventKey === EVDEventKey.L_MOUSE_BUTTON || row.eventKey === EVDEventKey.R_MOUSE_BUTTON) {
+        const dataPoint: BubbleDataPoint = {
+          x: row.data1!,
+          y: row.data2!,
+          r: 100*this.durationMultiplier,
+        }
+        chartDataEVD.push(dataPoint);
+      }
+    })
+
+    
+
     const datasets: ChartData<"bubble"> = {
       datasets: [{
         label: DataType.FXD,
-        data: chartData,
-        backgroundColor: `rgba(255, 99, 132, ${opacity})`,
+        data: chartDataFXD,
+        backgroundColor: `rgba(255, 125, 125, ${opacity})`,
+      }, {
+        label: DataType.EVD,
+        data: chartDataEVD,
+        backgroundColor: `rgba(125, 125, 255, ${opacity})`,
       }],
     };
 
