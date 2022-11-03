@@ -1,5 +1,5 @@
 import { PlayArrowRounded } from "@mui/icons-material";
-import { Slider, FormControl, InputLabel, Select, SelectChangeEvent, MenuItem, ToggleButton, Box,  Grid, Divider } from "@mui/material";
+import { Slider, ToggleButton, Box,  Grid, Divider } from "@mui/material";
 import {
   Chart as ChartJS,
   LinearScale,
@@ -15,15 +15,13 @@ import {
 import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts";
 import React from "react";
 import { Bubble } from "react-chartjs-2";
-import { VisualizationType, DataFiles, DataType, participants } from "../data/Data";
+import { VisualizationType, DataFiles, DataType } from "../data/Data";
 import { EVD } from "../data/types/raw/EVD";
 import { FXD } from "../data/types/raw/FXD";
 import InputSlider from "./InputSlider";
 import MessageCard from "./ScrollableMessageCard";
 
 const DEFAULT_DATA = {
-  participantId: "p1",
-  visualizationType: VisualizationType.GRAPH,
   timeMin: 0,
   opacity: 0.3,
 }
@@ -32,13 +30,12 @@ interface Props {
   height?: string,
   width?: string;
   margin?: string;
-  
+  participantId: string;
+  visualizationType: VisualizationType;
 }
 
 interface State {
   data: ChartData<"bubble">;
-  participantId: string;
-  visualizationType: VisualizationType;
   durationMultiplier: number;
 
   timeMin: number;
@@ -79,12 +76,10 @@ class BubbleChartCard extends React.Component<Props, State> {
       units: ["m", "s", "ms"],
     });
     
-    const data = this.getBubbleChartData(DEFAULT_DATA.participantId, DEFAULT_DATA.visualizationType);
-    const EVDData = this.getEVDData(DEFAULT_DATA.participantId, DEFAULT_DATA.visualizationType , data.max);
+    const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType);
+    const EVDData = this.getEVDData(this.props.participantId, this.props.visualizationType, data.max);
     this.state = {
       data: data.data,
-      participantId: DEFAULT_DATA.participantId,
-      visualizationType: DEFAULT_DATA.visualizationType,
       durationMultiplier: data.durationMultiplier,
 
       timeMin: DEFAULT_DATA.timeMin,
@@ -105,10 +100,24 @@ class BubbleChartCard extends React.Component<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any) {
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>, snapshot?: any): void {
+    if (this.props.participantId !== prevProps.participantId || this.props.visualizationType !== prevProps.visualizationType) {
+      const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType, undefined, undefined ,this.state.opacity);
+      this.setState({
+        data: data.data,
+        durationMultiplier: data.durationMultiplier,
+
+        timeMin: DEFAULT_DATA.timeMin,
+        timeMax: data.max,
+        timeRange: [DEFAULT_DATA.timeMin, data.max],
+
+        playback: false,
+      });
+    }
+
     const nextTimeRange = this.state.timeRange;
       if (nextTimeRange[1] !== prevState.timeRange[1]) {
-        const participantEVDData = this.getEVDData(this.state.participantId, this.state.visualizationType, nextTimeRange[1]);
+        const participantEVDData = this.getEVDData(this.props.participantId, this.props.visualizationType, nextTimeRange[1]);
         
         this.setState({  
           events: participantEVDData,
@@ -118,15 +127,15 @@ class BubbleChartCard extends React.Component<Props, State> {
 
   private getEVDData(participantId: string, visualizationType: VisualizationType, time: number, amount?: number) {
     let participantEVDData = DataFiles.get(participantId)!.get(visualizationType)!.get(DataType.EVD)! as EVD[];
-        participantEVDData = participantEVDData
-          .filter(data => {
-            return data.time <= time;
-          })
-        if (amount) {
-          participantEVDData = participantEVDData.slice(-amount);
-        }
-      
-      return participantEVDData;
+    participantEVDData = participantEVDData
+      .filter(data => {
+        return data.time <= time;
+      });
+    if (amount) {
+      participantEVDData = participantEVDData.slice(-amount);
+    }
+  
+    return participantEVDData;
   }
 
   private getBubbleChartData(participantId: string, visualizationType: VisualizationType, min?: number, max?: number, opacity?: number) {
@@ -219,73 +228,6 @@ class BubbleChartCard extends React.Component<Props, State> {
         height: this.props.height ?? "100%",
         margin: this.props.margin ?? "0 auto",
       }}>
-        <h2>Data Selection</h2>
-        <div className="selection">
-          <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
-            <InputLabel id="participant-ids-label">Participant</InputLabel>
-            <Select
-              labelId="participant-ids-label"
-              id="participant-ids"
-              value={this.state.participantId}
-              onChange={(event: SelectChangeEvent) => {
-                const {
-                  target: { value },
-                } = event;
-                const data = this.getBubbleChartData(value, this.state.visualizationType, undefined, undefined, this.state.opacity);
-                this.setState({
-                  data: data.data,
-                  participantId: value,
-                  timeMin: DEFAULT_DATA.timeMin,
-                  timeMax: data.max,
-                  timeRange: [DEFAULT_DATA.timeMin, data.max],
-                  durationMultiplier: data.durationMultiplier,
-                  playback: false,
-                });
-              }}
-            >
-              {participants.map((id) => (
-                <MenuItem
-                  key={id}
-                  value={id}
-                >
-                  {id}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl variant="filled" sx={{ m: 1, minWidth: 150 }}>
-            <InputLabel id="visualization-types-label">Visualization Type</InputLabel>
-            <Select
-              labelId="visualization-types-label"
-              id="visualization-types"
-              value={this.state.visualizationType}
-              onChange={(event: SelectChangeEvent) => {
-                const {
-                  target: { value },
-                } = event;
-                const data = this.getBubbleChartData(this.state.participantId, value as VisualizationType, undefined, undefined, this.state.opacity);
-                this.setState({
-                  data: data.data,
-                  visualizationType: value as VisualizationType,
-                  timeMin: DEFAULT_DATA.timeMin,
-                  timeMax: data.max,
-                  timeRange: [DEFAULT_DATA.timeMin, data.max],
-                  durationMultiplier: data.durationMultiplier,
-                  playback: false,
-                });
-              }}
-            >
-              {Object.values(VisualizationType).map((type) => (
-                <MenuItem
-                  key={type}
-                  value={type}
-                >
-                  {type}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </div>
 
         <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
 
@@ -294,7 +236,7 @@ class BubbleChartCard extends React.Component<Props, State> {
 
         <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
 
-        <h2>Chart Controls</h2>
+        <h1>Chart Controls</h1>
         <div className="menu">
           <div className="slider">
             <Box sx={{ width: "100%" }}>
@@ -308,7 +250,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                     max={this.state.timeMax}
                     step={1000}
                     onChange={(event: Event, newValue: number | number[]) =>{
-                      const data = this.getBubbleChartData(this.state.participantId, this.state.visualizationType, (newValue as number[])[0],  (newValue as number[])[1], this.state.opacity);
+                      const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType, (newValue as number[])[0],  (newValue as number[])[1], this.state.opacity);
                       this.setState({
                         data: data.data,
                         timeRange: newValue as number[],
@@ -337,7 +279,7 @@ class BubbleChartCard extends React.Component<Props, State> {
                               return;
                             }
                           }
-                          const data = this.getBubbleChartData(this.state.participantId, this.state.visualizationType, this.state.timeRange[0], this.state.timeRange[1], this.state.opacity);
+                          const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType, this.state.timeRange[0], this.state.timeRange[1], this.state.opacity);
                           this.setState({
                             data: data.data,
                             timeRange: [this.state.timeRange[0], this.state.timeRange[1] + 1000],
@@ -371,7 +313,7 @@ class BubbleChartCard extends React.Component<Props, State> {
               step={0.01}
               value={this.state.opacity}
               onSliderChange={(event: Event, newValue: number | number[]) =>{
-                const data = this.getBubbleChartData(this.state.participantId, this.state.visualizationType, this.state.timeRange[0], this.state.timeRange[1], newValue as number);
+                const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType, this.state.timeRange[0], this.state.timeRange[1], newValue as number);
                 this.setState({
                   data: data.data,
                   opacity: newValue as number,
@@ -379,7 +321,7 @@ class BubbleChartCard extends React.Component<Props, State> {
               }}
               onInputChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 const newValue = event.target.value === '' ? 0 : Number(event.target.value);
-                const data = this.getBubbleChartData(this.state.participantId, this.state.visualizationType, this.state.timeRange[0], this.state.timeRange[1], newValue);
+                const data = this.getBubbleChartData(this.props.participantId, this.props.visualizationType, this.state.timeRange[0], this.state.timeRange[1], newValue);
                 this.setState({
                   data: data.data,
                   opacity: newValue,
@@ -391,7 +333,7 @@ class BubbleChartCard extends React.Component<Props, State> {
 
         <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
 
-        <h2>Events</h2>
+        <h1>Events</h1>
         <MessageCard 
           height={"200px"}
           backgroundColor={"#fafafa"}
