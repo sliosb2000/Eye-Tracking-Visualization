@@ -16,3 +16,8 @@ export enum Ontologies {
   CONFERENCE = 1,
   BIOMEDICAL = 2,
 }
+
+export const ontologyMap = new Map<Ontologies, string>([
+	[Ontologies.CONFERENCE, "Conference"],
+	[Ontologies.BIOMEDICAL, "Biomedical"],
+]);

@@ -252,12 +252,20 @@ class BubbleChartCard extends React.Component<Props, State> {
         margin: this.props.margin ?? "0 auto",
       }}>
 
-        <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
+        <Divider
+          variant="middle"
+          sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}
+          flexItem
+        />  
 
         <h1>Chart</h1>
         <Bubble options={options} data={this.state.bubbleChartDataSets} />
 
-        <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
+        <Divider
+          variant="middle"
+          sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}
+          flexItem
+        />  
 
         <h1>Chart Controls</h1>
         <div className="menu">
@@ -358,7 +366,11 @@ class BubbleChartCard extends React.Component<Props, State> {
           </div>
         </div>
 
-        <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
+        <Divider
+          variant="middle"
+          sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}
+          flexItem
+        />  
 
         <h1>Events</h1>
         <MessageCard 
