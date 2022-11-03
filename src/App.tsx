@@ -1,7 +1,9 @@
 import { Divider, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import React from 'react';
 import BubbleChartCard from './components/ChartCard';
-import { participants, VisualizationType } from './data/Data';
+import { DataFiles, participants, VisualizationType } from './data/Data';
+import { ontologyMap } from './data/types/AdditionalData';
+import './App.css';
 
 const DEFAULT_DATA = {
   participantId: "p1",
@@ -30,6 +32,20 @@ class App extends React.Component<Props, State> {
     }
   }
 
+  private getVisualizationStats() {
+    const additionalData = DataFiles.get(this.state.participantId)!.additionalData
+      .find(data => {
+        return data.visualization === this.state.visualizationType;
+      })!;
+
+    return (
+      <p>
+        <b>Ontology: </b>{ontologyMap.get(additionalData.ontology)}
+        <br /><b>Success: </b>{additionalData.success*100}
+      </p>
+    );
+  }
+
   render() {
     return (
       <div className="App">
@@ -43,7 +59,11 @@ class App extends React.Component<Props, State> {
           }}
         >Eye Gaze Data Visualization</h1>
 
-        <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
+        <Divider
+          variant="middle"
+          sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}
+          flexItem
+        />  
 
         <div
           style={{
@@ -51,60 +71,79 @@ class App extends React.Component<Props, State> {
             width: "70%",
           }}
         >
-          <h1>Data Selection</h1>
-          <div className="selection">
-            <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel id="participant-ids-label">Participant</InputLabel>
-              <Select
-                labelId="participant-ids-label"
-                id="participant-ids"
-                value={this.state.participantId}
-                onChange={(event: SelectChangeEvent) => {
-                  const {
-                    target: { value },
-                  } = event;
-                  this.setState({
-                    participantId: value,
-                  });
-                }}
-              >
-                {participants.map((id) => (
-                  <MenuItem
-                    key={id}
-                    value={id}
+          <div
+            style={{
+              display: "flex",
+            }}
+          >
+            <div>
+              <h1>Data Selection</h1>
+              <div className="selection">
+                <FormControl variant="filled" sx={{ m: 1, minWidth: 120 }}>
+                  <InputLabel id="participant-ids-label">Participant</InputLabel>
+                  <Select
+                    labelId="participant-ids-label"
+                    id="participant-ids"
+                    value={this.state.participantId}
+                    onChange={(event: SelectChangeEvent) => {
+                      const {
+                        target: { value },
+                      } = event;
+                      this.setState({
+                        participantId: value,
+                      });
+                    }}
                   >
-                    {id}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl variant="filled" sx={{ m: 1, minWidth: 150 }}>
-              <InputLabel id="visualization-types-label">Visualization Type</InputLabel>
-              <Select
-                labelId="visualization-types-label"
-                id="visualization-types"
-                value={this.state.visualizationType}
-                onChange={(event: SelectChangeEvent) => {
-                  const {
-                    target: { value },
-                  } = event;
-                  this.setState({
-                    visualizationType: value as VisualizationType,
-                  });
-                }}
-              >
-                {Object.values(VisualizationType).map((type) => (
-                  <MenuItem
-                    key={type}
-                    value={type}
+                    {participants.map((id) => (
+                      <MenuItem
+                        key={id}
+                        value={id}
+                      >
+                        {id}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl variant="filled" sx={{ m: 1, minWidth: 150 }}>
+                  <InputLabel id="visualization-types-label">Visualization Type</InputLabel>
+                  <Select
+                    labelId="visualization-types-label"
+                    id="visualization-types"
+                    value={this.state.visualizationType}
+                    onChange={(event: SelectChangeEvent) => {
+                      const {
+                        target: { value },
+                      } = event;
+                      this.setState({
+                        visualizationType: value as VisualizationType,
+                      });
+                    }}
                   >
-                    {type}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </div>
+                    {Object.values(VisualizationType).map((type) => (
+                      <MenuItem
+                        key={type}
+                        value={type}
+                      >
+                        {type}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+            </div>
 
+            <Divider
+              orientation="vertical"
+              variant="middle"
+              sx={{marginLeft: "20px", marginRight: "20px"}}
+              flexItem
+            />  
+
+            <div>
+              <h1>Visualization Stats</h1>
+              {this.getVisualizationStats()}
+            </div>
+          </div>
           <BubbleChartCard
             participantId={this.state.participantId}
             visualizationType={this.state.visualizationType}
@@ -112,7 +151,11 @@ class App extends React.Component<Props, State> {
           />
         </div>
 
-        <Divider sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}/>
+        <Divider
+          variant="middle"
+          sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}
+          flexItem
+        />  
       </div>
     );
   }
