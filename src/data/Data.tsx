@@ -1,3 +1,4 @@
+import { AdditionalData, AdditionalDataVisualizationTypeMap, Ontologies } from "./types/AdditionalData";
 import { EVD, EVDEventKeyItems, EVDEventKey } from "./types/raw/EVD";
 import { FXD } from "./types/raw/FXD";
 import { GZD } from "./types/raw/GZD";
@@ -8,6 +9,7 @@ export enum VisualizationType {
   GRAPH = "graph",
   TREE = "tree",
 }
+
 export enum DataType {
   FXD = "FXD",
   EVD = "EVD",
@@ -20,14 +22,53 @@ const dataPath = "./data/raw";
 /**
  *  Map mirroring data file heiarchy
  *  ParticipantId: string
- *    VisualizationType: VisualizationType.GRAPH | VisualizationType.Tree
- *       DataType: DataType.FXD | DataType.EVD | DataType.GZD
+ *    ParticipantData: ParticipantData
+ *      AdditionalData: AdditionalData
+ *      VisualizationType: VisualizationType.GRAPH | VisualizationType.Tree
+ *        DataType: DataType.FXD | DataType.EVD | DataType.GZD
  * 
- * Usage: DataFiles.get("p3")!.get(VisualizationType.GRAPH)!.get(DataType.FXD)! as FXD[]
+ * Usage: DataFiles.get("p3")!.data.get(VisualizationType.GRAPH)!.get(DataType.FXD)! as FXD[]
  */
-export const DataFiles = new Map<string, Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>>();
+export const DataFiles = new Map<string, ParticipantData>();
+
+export interface ParticipantData {
+	data: Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>;
+	additionalData: AdditionalData[];
+}
 
 export async function loadData() {  
+  const file = require("".concat("./data/Project_2_Additional_Participant_Data.csv"));
+  const additionalDataMap = new Map<string, AdditionalData[]>();
+  await fetch(file)
+    .then(response => response.text())
+    .then(text => {
+      const dataRows = text.split("\n");
+      for (let i=0; i<dataRows.length; i++) {
+        if (i === 0) continue; // Remove first row = column names row
+
+        const dataRow = dataRows[i];
+        const data = dataRow.split(/[\s,]+/).filter(element => {
+          return element !== '';
+        });
+        
+        let j = 0;
+        while(j < data.length-1) {
+          let dataElement: AdditionalData = {
+            participantId: data[j++],
+            ontology: Number(data[j++]) as Ontologies,
+            visualization: AdditionalDataVisualizationTypeMap.get(Number(data[j++]))! as VisualizationType,
+            success: Number(data[j++]),
+          }
+          const existingMap = additionalDataMap.get(dataElement.participantId);
+          if (existingMap) {
+            existingMap.push(dataElement);
+          } else {
+            additionalDataMap.set(dataElement.participantId, [dataElement]);
+          }
+        }
+      }
+    });
+
   for (const i of participants) {
     const visualizationTypeMap = new Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>();
     for (const j of Object.values(VisualizationType)) {
@@ -112,6 +153,10 @@ export async function loadData() {
       }
       visualizationTypeMap.set(j, dataTypeMap);
     }
-    DataFiles.set(i, visualizationTypeMap);
+
+    DataFiles.set(i, {
+      data: visualizationTypeMap,
+      additionalData: additionalDataMap.get(i)!,
+    });
   }
 }

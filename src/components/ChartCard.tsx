@@ -119,7 +119,7 @@ class BubbleChartCard extends React.Component<Props, State> {
   }
 
   private updateFXDData(participantId: string, visualizationType: VisualizationType, timeRange?: number[], amount?: number) {
-    let FXDData = DataFiles.get(participantId)!.get(visualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
+    let FXDData = DataFiles.get(participantId)!.data.get(visualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
     if (timeRange) {
       const timeOffset = 1000;
       FXDData = FXDData.filter(data => {
@@ -142,7 +142,7 @@ class BubbleChartCard extends React.Component<Props, State> {
   }
 
   private updateEVDData(participantId: string, visualizationType: VisualizationType, timeRange?: number[], amount?: number) {
-    let EVDData = DataFiles.get(participantId)!.get(visualizationType)!.get(DataType.EVD)! as EVD[];
+    let EVDData = DataFiles.get(participantId)!.data.get(visualizationType)!.get(DataType.EVD)! as EVD[];
     if (timeRange) {
       const timeOffset = 1000;
       EVDData = EVDData.filter(data => {

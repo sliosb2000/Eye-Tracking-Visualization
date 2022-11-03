@@ -1,6 +1,6 @@
 import { Divider, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import React from 'react';
-import BubbleChartCard from './components/BubbleChartCard';
+import BubbleChartCard from './components/ChartCard';
 import { participants, VisualizationType } from './data/Data';
 
 const DEFAULT_DATA = {
