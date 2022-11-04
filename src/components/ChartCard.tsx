@@ -15,7 +15,7 @@ import {
 import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts";
 import React from "react";
 import { Bubble } from "react-chartjs-2";
-import { VisualizationType, DataFiles, DataType } from "../data/Data";
+import { VisualizationType, DataFiles, DataType } from "../data/data";
 import { EVD, EVDEventKey } from "../data/types/raw/EVD";
 import { FXD } from "../data/types/raw/FXD";
 import InputSlider from "./InputSlider";
@@ -119,7 +119,7 @@ class BubbleChartCard extends React.Component<Props, State> {
   }
 
   private updateFXDData(participantId: string, visualizationType: VisualizationType, timeRange?: number[], amount?: number) {
-    let FXDData = DataFiles.get(participantId)!.data.get(visualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
+    let FXDData = DataFiles.get(participantId)!.raw.get(visualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
     if (timeRange) {
       const timeOffset = 1000;
       FXDData = FXDData.filter(data => {
@@ -142,7 +142,7 @@ class BubbleChartCard extends React.Component<Props, State> {
   }
 
   private updateEVDData(participantId: string, visualizationType: VisualizationType, timeRange?: number[], amount?: number) {
-    let EVDData = DataFiles.get(participantId)!.data.get(visualizationType)!.get(DataType.EVD)! as EVD[];
+    let EVDData = DataFiles.get(participantId)!.raw.get(visualizationType)!.get(DataType.EVD)! as EVD[];
     if (timeRange) {
       const timeOffset = 1000;
       EVDData = EVDData.filter(data => {

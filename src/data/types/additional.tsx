@@ -1,4 +1,4 @@
-import { VisualizationType } from "../Data";
+import { VisualizationType } from "../data";
 
 export const AdditionalDataVisualizationTypeMap = new Map<number, string>([
 	[1, "graph"],

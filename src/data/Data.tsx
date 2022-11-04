@@ -1,4 +1,5 @@
-import { AdditionalData, AdditionalDataVisualizationTypeMap, Ontologies } from "./types/AdditionalData";
+import { AdditionalData, Ontologies, AdditionalDataVisualizationTypeMap } from "./types/additional";
+import { Generated } from "./types/generated/generated";
 import { EVD, EVDEventKeyItems, EVDEventKey } from "./types/raw/EVD";
 import { FXD } from "./types/raw/FXD";
 import { GZD } from "./types/raw/GZD";
@@ -17,27 +18,27 @@ export enum DataType {
 }
 
 const fileType = ".txt";
-const dataPath = "./data/raw";
+const dataPathRaw = "./data/raw";
+const dataPathGenerated = "./data/generated";
+const dataPathAdditional = "./data/additional";
+
+const fileAdditional = "Project_2_Additional_Participant_Data.csv";
 
 /**
  *  Map mirroring data file heiarchy
- *  ParticipantId: string
- *    ParticipantData: ParticipantData
- *      AdditionalData: AdditionalData
- *      VisualizationType: VisualizationType.GRAPH | VisualizationType.Tree
- *        DataType: DataType.FXD | DataType.EVD | DataType.GZD
  * 
- * Usage: DataFiles.get("p3")!.data.get(VisualizationType.GRAPH)!.get(DataType.FXD)! as FXD[]
+ *  Usage: DataFiles.get("p3")!.data.get(VisualizationType.GRAPH)!.raw.get(DataType.FXD)! as FXD[]
  */
 export const DataFiles = new Map<string, ParticipantData>();
 
 export interface ParticipantData {
-	data: Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>;
-	additionalData: AdditionalData[];
+	raw: Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>;
+  generated: Map<VisualizationType, Map<DataType, Array<Generated>>>;
+	additional: AdditionalData[];
 }
 
 export async function loadData() {  
-  const file = require("".concat("./data/Project_2_Additional_Participant_Data.csv"));
+  const file = require("".concat(`${dataPathAdditional}/${fileAdditional}`));
   const additionalDataMap = new Map<string, AdditionalData[]>();
   await fetch(file)
     .then(response => response.text())
@@ -70,14 +71,18 @@ export async function loadData() {
     });
 
   for (const i of participants) {
-    const visualizationTypeMap = new Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>();
+    const visualizationTypeMapRaw = new Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>>();
+    const visualizationTypeMapGenerated = new Map<VisualizationType, Map<DataType, Array<Generated>>>();
+    
     for (const j of Object.values(VisualizationType)) {
-      const dataTypeMap = new Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>();
+      const dataTypeMapRaw = new Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>();
+      const dataTypeMapGenerated = new Map<DataType, Array<Generated>>();
+
       for (const k of Object.values(DataType)) {
-        const path = `${dataPath}/${i}/${i}.${j}${k}${fileType}`;
-        console.log(`Loading ${path}`);
-        const file = require("".concat(path));
-        await fetch(file)
+        const pathRaw = `${dataPathRaw}/${i}/${i}.${j}${k}${fileType}`;
+        console.log(`Loading ${pathRaw}`);
+        const fileRaw = require("".concat(pathRaw));
+        await fetch(fileRaw)
           .then(response => response.text())
           .then(text => {
             const dataRows = text.split("\n");
@@ -117,7 +122,7 @@ export async function loadData() {
                     EVDDataArray.push(dataElement);
                   }
                 }
-                dataTypeMap.set(k, EVDDataArray);
+                dataTypeMapRaw.set(k, EVDDataArray);
                 break;
 
               case DataType.FXD:
@@ -142,7 +147,7 @@ export async function loadData() {
                     FXDDataArray.push(dataElement);
                   }
                 }
-                dataTypeMap.set(k, FXDDataArray);
+                dataTypeMapRaw.set(k, FXDDataArray);
                 break;
 
               case DataType.GZD:
@@ -150,13 +155,43 @@ export async function loadData() {
                 break;
             }  
           });
+
+          const pathGenerated = `${dataPathGenerated}/${i}/${j}${k}Results${fileType}`;
+          console.log(`Loading ${pathGenerated}`);
+          const fileGenerated = require("".concat(pathGenerated));
+          await fetch(fileGenerated)
+            .then(response => response.text())
+            .then(text => {
+              const dataRows = text.split("\n");
+
+              const generatedArray = new Array<Generated>();
+              for (const dataRow of dataRows) {
+                const data = dataRow.split(":").filter(element => {
+                  return element !== '';
+                });
+
+                let l = 0;
+                while(l < data.length-1) {
+                  let dataElement: Generated = {
+                    description: data[l++],
+                    value: Number(data[l++]),
+                  }
+
+                  generatedArray.push(dataElement);
+                }
+              }
+              dataTypeMapGenerated.set(k, generatedArray);
+            });
       }
-      visualizationTypeMap.set(j, dataTypeMap);
+
+      visualizationTypeMapRaw.set(j, dataTypeMapRaw);
+      visualizationTypeMapGenerated.set(j, dataTypeMapGenerated);
     }
 
     DataFiles.set(i, {
-      data: visualizationTypeMap,
-      additionalData: additionalDataMap.get(i)!,
+      raw: visualizationTypeMapRaw,
+      generated: visualizationTypeMapGenerated,
+      additional: additionalDataMap.get(i)!,
     });
   }
 }

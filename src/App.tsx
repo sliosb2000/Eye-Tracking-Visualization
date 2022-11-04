@@ -1,8 +1,8 @@
 import { Divider, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import React from 'react';
 import BubbleChartCard from './components/ChartCard';
-import { DataFiles, participants, VisualizationType } from './data/Data';
-import { ontologyMap } from './data/types/AdditionalData';
+import { DataFiles, participants, VisualizationType } from './data/data';
+import { ontologyMap } from './data/types/additional';
 import './App.css';
 
 const DEFAULT_DATA = {
@@ -33,7 +33,7 @@ class App extends React.Component<Props, State> {
   }
 
   private getVisualizationStats() {
-    const additionalData = DataFiles.get(this.state.participantId)!.additionalData
+    const additionalData = DataFiles.get(this.state.participantId)!.additional
       .find(data => {
         return data.visualization === this.state.visualizationType;
       })!;
