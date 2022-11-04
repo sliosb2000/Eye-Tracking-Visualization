@@ -1,4 +1,4 @@
-import { AdditionalData, Ontologies, AdditionalDataVisualizationTypeMap } from "./types/additional";
+import { AdditionalData, Ontologies, AdditionalDataVisualizationTypeMap } from "./types/additional/additional";
 import { Generated } from "./types/generated/generated";
 import { EVD, EVDEventKeyItems, EVDEventKey } from "./types/raw/EVD";
 import { FXD } from "./types/raw/FXD";

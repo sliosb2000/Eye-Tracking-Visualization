@@ -2,7 +2,7 @@ import { Divider, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent }
 import React from 'react';
 import BubbleChartCard from './components/ChartCard';
 import { DataFiles, participants, VisualizationType } from './data/data';
-import { ontologyMap } from './data/types/additional';
+import { ontologyMap } from './data/types/additional/additional';
 import './App.css';
 
 const DEFAULT_DATA = {
