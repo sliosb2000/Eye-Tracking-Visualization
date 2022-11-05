@@ -15,7 +15,7 @@ import {
 import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts";
 import React from "react";
 import { Bubble } from "react-chartjs-2";
-import { VisualizationType, DataFiles, DataType } from "../data/data";
+import { VisualizationType, DataFiles, DataType } from "../data/dataFIX";
 import { EVD, EVDEventKey } from "../data/types/raw/EVD";
 import { FXD } from "../data/types/raw/FXD";
 import InputSlider from "./InputSlider";
