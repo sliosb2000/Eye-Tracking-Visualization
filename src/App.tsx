@@ -41,7 +41,7 @@ class App extends React.Component<Props, State> {
     return (
       <p>
         <b>Ontology: </b>{ontologyMap.get(additionalData.ontology)}
-        <br /><b>Success: </b>{additionalData.success*100}%
+        <br /><b>Task Success: </b>{(additionalData.success*100).toFixed(3)}%
       </p>
     );
   }
