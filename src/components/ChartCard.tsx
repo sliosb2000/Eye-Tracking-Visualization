@@ -2,20 +2,18 @@ import { PlayArrowRounded } from "@mui/icons-material";
 import { Slider, ToggleButton, Box,  Grid, Divider } from "@mui/material";
 import {
   Chart as ChartJS,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend,
   BubbleDataPoint,
   ChartData,
   ChartOptions,
   TooltipItem,
   Tick,
+  registerables,
 } from 'chart.js';
 import { HumanizeDuration, HumanizeDurationLanguage } from "humanize-duration-ts";
 import React from "react";
-import { Bubble } from "react-chartjs-2";
-import { VisualizationType, DataFiles, DataType } from "../data/data";
+import { Bubble, Radar } from "react-chartjs-2";
+import { VisualizationType, DataFiles, DataType, participants } from "../data/data";
+import { DescriptionUnitMap, Generated } from "../data/types/generated/generated";
 import { EVD, EVDEventKey } from "../data/types/raw/EVD";
 import { FXD } from "../data/types/raw/FXD";
 import InputSlider from "./InputSlider";
@@ -36,6 +34,7 @@ interface Props {
 
 interface State {
   bubbleChartDataSets: ChartData<"bubble">;
+  radarChartDataSets: ChartData<"radar">;
 
   timeMax: number;
   timeRange: number[];
@@ -52,6 +51,9 @@ class BubbleChartCard extends React.Component<Props, State> {
 
   private EVDData: EVD[] = [];
   private FXDData: FXD[] = [];
+  private generatedFXDData: Generated[] = [];
+  private generatedFXDRadarChartData: number[] = [];
+  private globalGeneratedFXDRadarChartAverages: number[] = [];
 
   private maxTime: number = 0;
   private durationMultiplier: number = 1;
@@ -59,7 +61,7 @@ class BubbleChartCard extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
+    ChartJS.register(...registerables);
 
     this.humanizer.addLanguage("shortEn", {
       y: () => "y",
@@ -82,6 +84,7 @@ class BubbleChartCard extends React.Component<Props, State> {
     
     this.state = {
       bubbleChartDataSets: this.getBubbleChartDatasets(this.durationMultiplier, DEFAULT_DATA.opacity),
+      radarChartDataSets: this.getRadarChartDatasets(this.props.visualizationType),
 
       timeMax: this.maxTime,
       timeRange: [DEFAULT_DATA.timeMin, this.maxTime],
@@ -104,6 +107,7 @@ class BubbleChartCard extends React.Component<Props, State> {
 
       this.setState({
         bubbleChartDataSets: this.getBubbleChartDatasets(this.durationMultiplier, this.state.opacity),
+        radarChartDataSets: this.getRadarChartDatasets(this.props.visualizationType),
 
         timeMax: this.maxTime,
         timeRange: [DEFAULT_DATA.timeMin, this.maxTime],
@@ -116,10 +120,11 @@ class BubbleChartCard extends React.Component<Props, State> {
   private updateData(participantId: string, visualizationType: VisualizationType, timeRange?: number[]) {
     this.updateFXDData(participantId, visualizationType, timeRange);
     this.updateEVDData(participantId, visualizationType, timeRange);
+    this.updateGeneratedFXDData(participantId, visualizationType);
   }
 
   private updateFXDData(participantId: string, visualizationType: VisualizationType, timeRange?: number[], amount?: number) {
-    let FXDData = DataFiles.get(participantId)!.raw.get(visualizationType as VisualizationType)!.get(DataType.FXD)! as FXD[];
+    let FXDData = DataFiles.get(participantId)!.raw.get(visualizationType)!.get(DataType.FXD)! as FXD[];
     if (timeRange) {
       const timeOffset = 1000;
       FXDData = FXDData.filter(data => {
@@ -157,6 +162,10 @@ class BubbleChartCard extends React.Component<Props, State> {
     this.EVDData = EVDData;
   }
 
+  private updateGeneratedFXDData(participantId: string, visualizationType: VisualizationType) {
+    this.generatedFXDData = DataFiles.get(participantId)!.generated.get(visualizationType)!.get(DataType.FXD)! as Generated[];
+  }
+
   private getBubbleChartDatasets(durationMultiplier: number, opacity?: number) {
     const chartDataFXD: BubbleDataPoint[] = this.FXDData.map(row => {
       const dataPoint: BubbleDataPoint = {
@@ -177,32 +186,112 @@ class BubbleChartCard extends React.Component<Props, State> {
         }
         chartDataEVD.push(dataPoint);
       }
-    })
-
-    
+    });
 
     const datasets: ChartData<"bubble"> = {
       datasets: [{
         label: DataType.FXD,
         data: chartDataFXD,
-        backgroundColor: `rgba(255, 125, 125, ${opacity})`,
+        backgroundColor: `rgba(255, 99, 132, ${opacity})`,
       }, {
         label: DataType.EVD,
         data: chartDataEVD,
-        backgroundColor: `rgba(125, 125, 255, ${opacity})`,
+        backgroundColor: `rgba(54, 162, 235, ${opacity})`,
       }],
     };
 
     return datasets;
   }
 
+  private getRadarChartDatasets(visualizationType: VisualizationType) {
+    const allParticipantFXDGenerated: number[][] = [];
+    for (const participantId of participants) {
+      const generatedFXDData = DataFiles.get(participantId)!.generated.get(visualizationType)!.get(DataType.FXD)! as Generated[];
+      const chartDataFXD: number[] = [];
+      for (const row of generatedFXDData) {
+        if (DescriptionUnitMap.has(row.description)) {
+          chartDataFXD.push(row.value);
+        }
+      }
+      allParticipantFXDGenerated.push(chartDataFXD);
+    }
+   
+    const averages: number[] = [...allParticipantFXDGenerated[0]];
+    const globalMax: number[] = [...allParticipantFXDGenerated[0]];
+    const globalMin: number[] = [...allParticipantFXDGenerated[0]];
+    allParticipantFXDGenerated.forEach(participantData => {
+      for (let i=0; i<participantData.length; i++) {
+        averages[i] = (participantData[i] + averages[i]) / 2;
+
+        if (participantData[i] > globalMax[i]) {
+          globalMax[i] = participantData[i];
+        }
+
+        if (participantData[i] < globalMin[i]) {
+          globalMin[i] = participantData[i];
+        }
+      }
+    });
+
+    this.globalGeneratedFXDRadarChartAverages = [...averages];
+
+    const chartLabelsFXD: string[] = [];
+    let chartDataFXD: number[] = [];
+    for (const row of this.generatedFXDData) {
+      if (DescriptionUnitMap.has(row.description)) {
+        chartLabelsFXD.push(row.description);
+        chartDataFXD.push(row.value);
+      }
+    }
+    this.generatedFXDRadarChartData = [...chartDataFXD];
+
+    for (let i=0; i<chartDataFXD.length; i++) {
+      chartDataFXD[i] = this.normalizeData(chartDataFXD[i], globalMax[i], globalMin[i])
+    }
+
+    for (let i=0; i<averages.length; i++) {
+      averages[i] = this.normalizeData(averages[i], globalMax[i], globalMin[i])
+    }
+
+    const datasets: ChartData<"radar"> = {
+      labels: chartLabelsFXD,
+      datasets: [{
+        label: this.props.participantId,
+        data: chartDataFXD,
+        fill: true,
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgb(255, 99, 132)',
+        pointBackgroundColor: 'rgb(255, 99, 132)',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: 'rgb(255, 99, 132)'
+      }, {
+        label: "Average Participant",
+        data: averages,
+        fill: true,
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgb(54, 162, 235)',
+        pointBackgroundColor: 'rgb(54, 162, 235)',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: 'rgb(54, 162, 235)'
+      }],
+    }
+
+    return datasets;
+  }
+
   private getHumanizedTimeFromMilliseconds(timeMs: number) {
-    return this.humanizer.humanize(Math.floor(timeMs / 1000) * 1000).replaceAll(",", "");
+    return this.humanizer.humanize(Number(timeMs.toFixed(3))).replaceAll(",", "");
+  }
+
+  private normalizeData(value: number, max: number, min: number) {
+    return value === 0 ? 0 : Number(((value-min)/(max-min)).toFixed(2));;
   }
   
   render() {
     const that = this;
-    const options: ChartOptions<"bubble"> = {
+    const optionsBubble: ChartOptions<"bubble"> = {
       plugins: {
         tooltip: {
           callbacks: {
@@ -244,6 +333,39 @@ class BubbleChartCard extends React.Component<Props, State> {
         },
       },
     };
+    const optionsRadar: ChartOptions<"radar"> = {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            title: function(context: TooltipItem<"radar">[]) {
+              return context[0].label;
+            },
+            label: function(context: TooltipItem<"radar">) {
+              const dataIndex = context.dataIndex;
+              let value;
+              if (context.dataset.label === "Average Participant") {
+                value = that.globalGeneratedFXDRadarChartAverages[dataIndex]; 
+              } else {
+                value = that.generatedFXDRadarChartData[dataIndex];
+              }
+              value = value.toFixed(3);
+              const unit = Array.from(DescriptionUnitMap.values())[dataIndex];
+              return `${value}${unit}`;
+            },
+          }
+        },
+      },
+      scales: {
+        r: {
+          angleLines: {
+              display: true,
+          },
+          // ticks: {
+          //   display: false
+          // },
+        }
+      }
+    }
 
     return (
       <div className="bubbleChart" style={{
@@ -258,8 +380,25 @@ class BubbleChartCard extends React.Component<Props, State> {
           flexItem
         />  
 
-        <h1>Chart</h1>
-        <Bubble options={options} data={this.state.bubbleChartDataSets} />
+        <h1>Fixation Radar Chart</h1>
+        <div
+          style={{
+            width: "60%",
+            height: "60%",
+            margin: "0 auto",
+          }}
+        >
+          <Radar options={optionsRadar} data={this.state.radarChartDataSets} />
+        </div>
+
+        <Divider
+          variant="middle"
+          sx={{marginLeft: "5%", marginRight: "5%", marginTop: "20px", marginBottom: "20px"}}
+          flexItem
+        />
+
+        <h1>Fixations and Graphable Events Bubble Chart</h1>
+        <Bubble options={optionsBubble} data={this.state.bubbleChartDataSets} />
 
         <Divider
           variant="middle"

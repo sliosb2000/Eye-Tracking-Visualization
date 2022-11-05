@@ -10,7 +10,6 @@ export enum VisualizationType {
   GRAPH = "graph",
   TREE = "tree",
 }
-
 export enum DataType {
   FXD = "FXD",
   EVD = "EVD",
