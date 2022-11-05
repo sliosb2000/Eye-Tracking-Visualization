@@ -49,6 +49,9 @@ class BubbleChartCard extends React.Component<Props, State> {
   private humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
   private playInterval?: NodeJS.Timeout;
 
+  private optionsBubble?: ChartOptions<"bubble">;
+  private optionsRadar?: ChartOptions<"radar">;
+
   private EVDData: EVD[] = [];
   private FXDData: FXD[] = [];
   private generatedFXDData: Generated[] = [];
@@ -92,6 +95,83 @@ class BubbleChartCard extends React.Component<Props, State> {
       opacity: DEFAULT_DATA.opacity,
       
       playback: false,
+    }
+
+    const that = this;
+    this.optionsBubble = {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            title: function(context: TooltipItem<"bubble">[]) {
+              return context[0].label;
+            },
+            label: function(context: TooltipItem<"bubble">) {
+              const rawData = context.raw as BubbleDataPoint;
+              const x = rawData.x;
+              const y = rawData.y;
+              return `(x, y): (${x}px, ${y}px)`;
+            },
+            afterLabel: function(context: TooltipItem<"bubble">) {
+              const rawData = context.raw as BubbleDataPoint;
+              const duration = rawData.r;
+              return `duration: ${Math.round(duration*1/that.durationMultiplier)}ms`;
+            }
+          }
+        },
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: function(value: string | number, index: number, ticks: Tick[]) {
+              return `${value}px`;
+            }
+          },
+          suggestedMin: 0,
+          suggestedMax: 1200,
+        },
+        x: {
+          ticks: {
+            callback: function(value: string | number, index: number, ticks: Tick[]) {
+              return `${value}px`;
+            }
+          },
+          suggestedMin: 0,
+          suggestedMax: 1400,
+        },
+      },
+    };
+    this.optionsRadar = {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            title: function(context: TooltipItem<"radar">[]) {
+              return context[0].label;
+            },
+            label: function(context: TooltipItem<"radar">) {
+              const dataIndex = context.dataIndex;
+              let value;
+              if (context.dataset.label === "Average Participant") {
+                value = that.globalGeneratedFXDRadarChartAverages[dataIndex]; 
+              } else {
+                value = that.generatedFXDRadarChartData[dataIndex];
+              }
+              value = value.toFixed(3);
+              const unit = Array.from(DescriptionUnitMap.values())[dataIndex];
+              return `${value}${unit}`;
+            },
+          }
+        },
+      },
+      scales: {
+        r: {
+          angleLines: {
+              display: true,
+          },
+          // ticks: {
+          //   display: false
+          // },
+        }
+      }
     }
   }
 
@@ -290,83 +370,6 @@ class BubbleChartCard extends React.Component<Props, State> {
   }
   
   render() {
-    const that = this;
-    const optionsBubble: ChartOptions<"bubble"> = {
-      plugins: {
-        tooltip: {
-          callbacks: {
-            title: function(context: TooltipItem<"bubble">[]) {
-              return context[0].label;
-            },
-            label: function(context: TooltipItem<"bubble">) {
-              const rawData = context.raw as BubbleDataPoint;
-              const x = rawData.x;
-              const y = rawData.y;
-              return `(x, y): (${x}px, ${y}px)`;
-            },
-            afterLabel: function(context: TooltipItem<"bubble">) {
-              const rawData = context.raw as BubbleDataPoint;
-              const duration = rawData.r;
-              return `duration: ${Math.round(duration*1/that.durationMultiplier)}ms`;
-            }
-          }
-        },
-      },
-      scales: {
-        y: {
-          ticks: {
-            callback: function(value: string | number, index: number, ticks: Tick[]) {
-              return `${value}px`;
-            }
-          },
-          suggestedMin: 0,
-          suggestedMax: 1200,
-        },
-        x: {
-          ticks: {
-            callback: function(value: string | number, index: number, ticks: Tick[]) {
-              return `${value}px`;
-            }
-          },
-          suggestedMin: 0,
-          suggestedMax: 1400,
-        },
-      },
-    };
-    const optionsRadar: ChartOptions<"radar"> = {
-      plugins: {
-        tooltip: {
-          callbacks: {
-            title: function(context: TooltipItem<"radar">[]) {
-              return context[0].label;
-            },
-            label: function(context: TooltipItem<"radar">) {
-              const dataIndex = context.dataIndex;
-              let value;
-              if (context.dataset.label === "Average Participant") {
-                value = that.globalGeneratedFXDRadarChartAverages[dataIndex]; 
-              } else {
-                value = that.generatedFXDRadarChartData[dataIndex];
-              }
-              value = value.toFixed(3);
-              const unit = Array.from(DescriptionUnitMap.values())[dataIndex];
-              return `${value}${unit}`;
-            },
-          }
-        },
-      },
-      scales: {
-        r: {
-          angleLines: {
-              display: true,
-          },
-          // ticks: {
-          //   display: false
-          // },
-        }
-      }
-    }
-
     return (
       <div className="bubbleChart" style={{
         width: this.props.width ?? "100%",
@@ -388,7 +391,7 @@ class BubbleChartCard extends React.Component<Props, State> {
             margin: "0 auto",
           }}
         >
-          <Radar options={optionsRadar} data={this.state.radarChartDataSets} />
+          <Radar options={this.optionsRadar!} data={this.state.radarChartDataSets} />
         </div>
 
         <Divider
@@ -398,7 +401,7 @@ class BubbleChartCard extends React.Component<Props, State> {
         />
 
         <h1>Fixations and Graphable Events Bubble Chart</h1>
-        <Bubble options={optionsBubble} data={this.state.bubbleChartDataSets} />
+        <Bubble options={this.optionsBubble!} data={this.state.bubbleChartDataSets} />
 
         <Divider
           variant="middle"
