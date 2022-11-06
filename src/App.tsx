@@ -84,8 +84,11 @@ class App extends React.Component<Props, State> {
     const file = require("".concat(`${dataPathAdditional}/${fileAdditional}`));
 
     this.fileCount++;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const _i of participants) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for (const _j of Object.values(VisualizationType)) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for (const _k of Object.values(DataType)) {
           this.fileCount += 2;
         }
