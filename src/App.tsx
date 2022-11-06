@@ -76,13 +76,12 @@ class App extends React.Component<Props, State> {
     this.state = {
       loadedFiles: [],
       loaded: false,
-      fileCount: 0
+      fileCount: 0,
     };
   }
 
   async componentDidMount() {
-    const file = require("".concat(`${dataPathAdditional}/${fileAdditional}`));
-
+    // Get total number of files to load
     this.fileCount++;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const _i of participants) {
@@ -95,9 +94,10 @@ class App extends React.Component<Props, State> {
       }
     }
     this.setState({
-      fileCount: this.fileCount
+      fileCount: this.fileCount,
     });
 
+    const file = require("".concat(`${dataPathAdditional}/${fileAdditional}`));
     const additionalDataMap = new Map<string, AdditionalData[]>();
     await fetch(file)
       .then(response => response.text())
@@ -134,19 +134,13 @@ class App extends React.Component<Props, State> {
       });
 
     for (const i of participants) {
-      const visualizationTypeMapRaw = new Map<
-        VisualizationType,
-        Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>
+      const visualizationTypeMapRaw = new Map<VisualizationType, Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>>
       >();
-      const visualizationTypeMapGenerated = new Map<
-        VisualizationType,
-        Map<DataType, Array<Generated>>
+      const visualizationTypeMapGenerated = new Map<VisualizationType, Map<DataType, Array<Generated>>
       >();
 
       for (const j of Object.values(VisualizationType)) {
-        const dataTypeMapRaw = new Map<
-          DataType,
-          Array<EVD> | Array<FXD> | Array<GZD>
+        const dataTypeMapRaw = new Map<DataType, Array<EVD> | Array<FXD> | Array<GZD>
         >();
         const dataTypeMapGenerated = new Map<DataType, Array<Generated>>();
 
