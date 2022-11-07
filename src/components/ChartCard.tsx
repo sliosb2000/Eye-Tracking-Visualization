@@ -362,7 +362,7 @@ class BubbleChartCard extends React.Component<Props, State> {
   }
 
   private getHumanizedTimeFromMilliseconds(timeMs: number) {
-    return this.humanizer.humanize(Math.floor(timeMs / 1000) * 1000).replaceAll(",", "");
+    return this.humanizer.humanize(Number(timeMs.toFixed(3))).replaceAll(",", "");
   }
 
   private normalizeData(value: number, max: number, min: number) {
