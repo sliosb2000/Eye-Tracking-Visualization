@@ -56,7 +56,7 @@ class HomePage extends React.Component<Props, State> {
             fontSize: "30px",
             backgroundColor: "#2576ce",
           }}
-        >Eyessss Gaze Data Visualization</h1>
+        >Eyessss555 Gaze Data Visualization</h1>
 
         <Divider
           variant="middle"
